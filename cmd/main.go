@@ -13,5 +13,6 @@ func main() {
 		log.Fatalf("No SLACK_TOKEN environment variable defined")
 	}
 	debug := false
-	slack.Start(slackToken, debug)
+	client := slack.NewChat(slackToken, debug)
+	client.Start()
 }

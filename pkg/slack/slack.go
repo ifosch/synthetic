@@ -7,21 +7,30 @@ import (
 	"github.com/slack-go/slack"
 )
 
-// Start ...
-func Start(token string, debug bool) {
+// Chat is a ...
+type Chat struct {
+	api *slack.Client
+}
+
+// NewChat ...
+func NewChat(token string, debug bool) (chat *Chat) {
 	api := slack.New(
 		token,
 		slack.OptionDebug(debug),
 		slack.OptionLog(log.New(os.Stdout, "slack-bot: ", log.Lshortfile|log.LstdFlags)),
 	)
+	return &Chat{api: api}
+}
 
-	rtm := api.NewRTM()
+// Start ...
+func (c *Chat) Start() {
+	rtm := c.api.NewRTM()
 	go rtm.ManageConnection()
 
 	for msg := range rtm.IncomingEvents {
 		switch ev := msg.Data.(type) {
 		case *slack.MessageEvent:
-			msg, err := ReadMessage(ev, api)
+			msg, err := ReadMessage(ev, c.api)
 			if err != nil {
 				log.Printf("Error %v processing message %v", err, ev)
 				break
