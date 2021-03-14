@@ -49,7 +49,46 @@ func NewConversationFromID(id string, api *slack.Client) (conversation *Conversa
 
 // Message is ...
 type Message struct {
-	event slack.MessageEvent
+	event        *slack.MessageEvent
+	Completed    bool
+	Thread       bool
+	User         *User
+	Conversation *Conversation
+	Text         string
+}
+
+// ReadMessage ...
+func ReadMessage(event *slack.MessageEvent, api *slack.Client) (msg *Message, err error) {
+	thread := false
+	if event.ClientMsgID == "" {
+		return &Message{
+			event:        event,
+			Completed:    false,
+			Thread:       thread,
+			User:         nil,
+			Conversation: nil,
+			Text:         "",
+		}, nil
+	}
+	if event.ThreadTimestamp != "" {
+		thread = true
+	}
+	user, err := NewUserFromID(event.User, api)
+	if err != nil {
+		return nil, err
+	}
+	conversation, err := NewConversationFromID(event.Channel, api)
+	if err != nil {
+		return nil, err
+	}
+	return &Message{
+		event:        event,
+		Completed:    true,
+		Thread:       thread,
+		User:         user,
+		Conversation: conversation,
+		Text:         event.Text,
+	}, nil
 }
 
 func main() {
@@ -70,15 +109,18 @@ func main() {
 	for msg := range rtm.IncomingEvents {
 		switch ev := msg.Data.(type) {
 		case *slack.MessageEvent:
-			user, err := NewUserFromID(ev.User, api)
+			msg, err := ReadMessage(ev, api)
 			if err != nil {
-				log.Printf("Error trying to get user info for '%v'", ev.User)
+				log.Printf("Error %v processing message %v", err, ev)
+				break
 			}
-			conversation, err := NewConversationFromID(ev.Channel, api)
-			if err != nil {
-				log.Printf("Error trying to get channel info for '%v'", ev.Channel)
+			if msg.Completed {
+				thread := ""
+				if msg.Thread {
+					thread = "a thread in "
+				}
+				log.Printf("Message: '%v' from '%v' in %v'%v'\n", msg.Text, msg.User.Name, thread, msg.Conversation.Name)
 			}
-			log.Printf("Message: '%v' from '%v' in '%v'\n", ev.Text, user.Name, conversation.Name)
 		}
 	}
 }
