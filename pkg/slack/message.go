@@ -7,6 +7,7 @@ import (
 // Message is ...
 type Message struct {
 	event        *slack.MessageEvent
+	chat         *Chat
 	Completed    bool
 	Thread       bool
 	User         *User
@@ -15,11 +16,12 @@ type Message struct {
 }
 
 // ReadMessage ...
-func ReadMessage(event *slack.MessageEvent, api *slack.Client) (msg *Message, err error) {
+func ReadMessage(event *slack.MessageEvent, chat *Chat) (msg *Message, err error) {
 	thread := false
 	if event.ClientMsgID == "" {
 		return &Message{
 			event:        event,
+			chat:         chat,
 			Completed:    false,
 			Thread:       thread,
 			User:         nil,
@@ -30,20 +32,32 @@ func ReadMessage(event *slack.MessageEvent, api *slack.Client) (msg *Message, er
 	if event.ThreadTimestamp != "" {
 		thread = true
 	}
-	user, err := NewUserFromID(event.User, api)
+	user, err := NewUserFromID(event.User, chat.api)
 	if err != nil {
 		return nil, err
 	}
-	conversation, err := NewConversationFromID(event.Channel, api)
+	conversation, err := NewConversationFromID(event.Channel, chat.api)
 	if err != nil {
 		return nil, err
 	}
 	return &Message{
 		event:        event,
+		chat:         chat,
 		Completed:    true,
 		Thread:       thread,
 		User:         user,
 		Conversation: conversation,
 		Text:         event.Text,
 	}, nil
+}
+
+// Reply ...
+func (m *Message) Reply(msg string, inThread bool) {
+	var message *slack.OutgoingMessage
+	if inThread || m.Thread {
+		message = m.chat.rtm.NewOutgoingMessage(msg, m.event.Channel, slack.RTMsgOptionTS(m.event.ThreadTimestamp))
+	} else {
+		message = m.chat.rtm.NewOutgoingMessage(msg, m.event.Channel)
+	}
+	m.chat.rtm.SendMessage(message)
 }

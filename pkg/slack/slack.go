@@ -19,6 +19,7 @@ func LogMessage(msg *Message) {
 // Chat is a ...
 type Chat struct {
 	api        *slack.Client
+	rtm        *slack.RTM
 	processors map[string][]func(*Message)
 }
 
@@ -34,8 +35,10 @@ func NewChat(token string, debug bool) (chat *Chat) {
 	}
 	chat = &Chat{
 		api:        api,
+		rtm:        nil,
 		processors: processors,
 	}
+	chat.rtm = chat.api.NewRTM()
 	chat.RegisterMessageProcessor(LogMessage)
 	return
 }
@@ -48,10 +51,9 @@ func (c *Chat) RegisterMessageProcessor(processor func(*Message)) {
 
 // Start ...
 func (c *Chat) Start() {
-	rtm := c.api.NewRTM()
-	go rtm.ManageConnection()
+	go c.rtm.ManageConnection()
 
-	for msg := range rtm.IncomingEvents {
+	for msg := range c.rtm.IncomingEvents {
 		c.Process(msg)
 	}
 }
@@ -60,7 +62,7 @@ func (c *Chat) Start() {
 func (c *Chat) Process(msg slack.RTMEvent) {
 	switch ev := msg.Data.(type) {
 	case *slack.MessageEvent:
-		msg, err := ReadMessage(ev, c.api)
+		msg, err := ReadMessage(ev, c)
 		if err != nil {
 			log.Printf("Error %v processing message %v", err, ev)
 			break
