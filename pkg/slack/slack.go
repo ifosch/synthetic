@@ -43,6 +43,7 @@ func NewChat(token string, debug bool) (chat *Chat) {
 // RegisterMessageProcessor ...
 func (c *Chat) RegisterMessageProcessor(processor func(*Message)) {
 	c.processors["message"] = append(c.processors["message"], processor)
+	log.Printf("%v function registered", getProcessorName(processor))
 }
 
 // Start ...
@@ -66,6 +67,7 @@ func (c *Chat) Process(msg slack.RTMEvent) {
 		}
 		if msg.Completed {
 			for _, processor := range c.processors["message"] {
+				log.Printf("Invoking processor %v", getProcessorName(processor))
 				go processor(msg)
 			}
 		}
