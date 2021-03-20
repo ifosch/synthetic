@@ -1,19 +1,19 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 
 	"github.com/ifosch/synthetic-david/pkg/slack"
 )
 
-func printMessage(msg *slack.Message) {
-	thread := ""
-	if msg.Thread {
-		thread = "a thread in "
+func replyHello(msg *slack.Message) {
+	if msg.Text == "hello" {
+		msg.Reply("hello", msg.Thread)
 	}
-	fmt.Printf("Message: '%v' from '%v' in %v'%v'\n", msg.Text, msg.User.Name, thread, msg.Conversation.Name)
+}
+	}
+	msg.Reply("hello", msg.Thread)
 }
 
 func main() {
@@ -23,6 +23,6 @@ func main() {
 	}
 	debug := false
 	client := slack.NewChat(slackToken, debug)
-	client.RegisterMessageProcessor(printMessage)
+	client.RegisterMessageProcessor(replyHello)
 	client.Start()
 }
