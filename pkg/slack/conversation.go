@@ -13,7 +13,7 @@ type Conversation struct {
 }
 
 // NewConversationFromID ...
-func NewConversationFromID(id string, api *slack.Client) (conversation *Conversation, err error) {
+func NewConversationFromID(id string, api IClient) (conversation *Conversation, err error) {
 	conversationInfo, err := api.GetConversationInfo(id, false)
 	if err != nil {
 		return nil, err
