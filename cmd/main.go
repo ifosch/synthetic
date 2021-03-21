@@ -12,8 +12,11 @@ func replyHello(msg *slack.Message) {
 		msg.Reply("hello", msg.Thread)
 	}
 }
+
+func reactHello(msg *slack.Message) {
+	if msg.Text == "hello" {
+		msg.React("wave")
 	}
-	msg.Reply("hello", msg.Thread)
 }
 
 func main() {
@@ -24,5 +27,6 @@ func main() {
 	debug := false
 	client := slack.NewChat(slackToken, true, debug)
 	client.RegisterMessageProcessor(replyHello)
+	client.RegisterMessageProcessor(reactHello)
 	client.Start()
 }

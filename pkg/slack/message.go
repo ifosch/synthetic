@@ -63,3 +63,8 @@ func (m *Message) Reply(msg string, inThread bool) {
 	}
 	m.chat.rtm.SendMessage(message)
 }
+
+// React ...
+func (m *Message) React(reaction string) {
+	m.chat.api.AddReaction(reaction, slack.ItemRef{Channel: m.event.Channel, Timestamp: m.event.Timestamp})
+}
