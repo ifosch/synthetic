@@ -18,13 +18,14 @@ func LogMessage(msg *Message) {
 
 // Chat is a ...
 type Chat struct {
-	api        *slack.Client
-	rtm        *slack.RTM
-	processors map[string][]func(*Message)
+	api                  *slack.Client
+	rtm                  *slack.RTM
+	defaultReplyInThread bool
+	processors           map[string][]func(*Message)
 }
 
 // NewChat ...
-func NewChat(token string, debug bool) (chat *Chat) {
+func NewChat(token string, defaultReplyInThread bool, debug bool) (chat *Chat) {
 	api := slack.New(
 		token,
 		slack.OptionDebug(debug),
@@ -34,9 +35,10 @@ func NewChat(token string, debug bool) (chat *Chat) {
 		"message": []func(*Message){},
 	}
 	chat = &Chat{
-		api:        api,
-		rtm:        nil,
-		processors: processors,
+		api:                  api,
+		rtm:                  nil,
+		defaultReplyInThread: defaultReplyInThread,
+		processors:           processors,
 	}
 	chat.rtm = chat.api.NewRTM()
 	chat.RegisterMessageProcessor(LogMessage)

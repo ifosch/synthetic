@@ -56,6 +56,8 @@ func (m *Message) Reply(msg string, inThread bool) {
 	var message *slack.OutgoingMessage
 	if inThread || m.Thread {
 		message = m.chat.rtm.NewOutgoingMessage(msg, m.event.Channel, slack.RTMsgOptionTS(m.event.ThreadTimestamp))
+	} else if m.chat.defaultReplyInThread {
+		message = m.chat.rtm.NewOutgoingMessage(msg, m.event.Channel, slack.RTMsgOptionTS(m.event.Timestamp))
 	} else {
 		message = m.chat.rtm.NewOutgoingMessage(msg, m.event.Channel)
 	}
