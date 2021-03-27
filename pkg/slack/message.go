@@ -1,6 +1,9 @@
 package slack
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/slack-go/slack"
 )
 
@@ -10,6 +13,7 @@ type Message struct {
 	chat         *Chat
 	Completed    bool
 	Thread       bool
+	Mention      bool
 	User         *User
 	Conversation *Conversation
 	Text         string
@@ -24,6 +28,7 @@ func ReadMessage(event *slack.MessageEvent, chat *Chat) (msg *Message, err error
 			chat:         chat,
 			Completed:    false,
 			Thread:       thread,
+			Mention:      false,
 			User:         nil,
 			Conversation: nil,
 			Text:         "",
@@ -45,6 +50,7 @@ func ReadMessage(event *slack.MessageEvent, chat *Chat) (msg *Message, err error
 		chat:         chat,
 		Completed:    true,
 		Thread:       thread,
+		Mention:      strings.Contains(event.Text, fmt.Sprintf("<@%v>", chat.botID)),
 		User:         user,
 		Conversation: conversation,
 		Text:         event.Text,
