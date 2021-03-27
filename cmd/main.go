@@ -3,18 +3,19 @@ package main
 import (
 	"log"
 	"os"
+	"strings"
 
 	"github.com/ifosch/synthetic-david/pkg/slack"
 )
 
 func replyHello(msg *slack.Message) {
-	if msg.Text == "hello" {
+	if msg.Mention && strings.Contains(msg.Text, "hello") {
 		msg.Reply("hello", msg.Thread)
 	}
 }
 
 func reactHello(msg *slack.Message) {
-	if msg.Text == "hello" {
+	if !msg.Mention && strings.Contains(msg.Text, "hello") {
 		msg.React("wave")
 	}
 }
