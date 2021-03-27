@@ -22,6 +22,7 @@ type Chat struct {
 	rtm                  *slack.RTM
 	defaultReplyInThread bool
 	processors           map[string][]func(*Message)
+	botID                string
 }
 
 // NewChat ...
@@ -39,6 +40,7 @@ func NewChat(token string, defaultReplyInThread bool, debug bool) (chat *Chat) {
 		rtm:                  nil,
 		defaultReplyInThread: defaultReplyInThread,
 		processors:           processors,
+		botID:                "",
 	}
 	chat.rtm = chat.api.NewRTM()
 	chat.RegisterMessageProcessor(LogMessage)
@@ -78,6 +80,7 @@ func (c *Chat) Process(msg slack.RTMEvent) {
 	case *slack.ConnectingEvent:
 		log.Printf("Trying to connect to Slack: Attempt %v of %v", ev.Attempt, ev.ConnectionCount)
 	case *slack.ConnectedEvent:
+		c.botID = ev.Info.User.ID
 		log.Printf("Connected to %v Slack as %v after %v attempts ", ev.Info.Team.Name, ev.Info.User.Name, ev.ConnectionCount+1)
 	case *slack.InvalidAuthEvent:
 		log.Fatalf("Invalid credentials provided to Slack")
