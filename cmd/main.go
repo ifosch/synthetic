@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/ifosch/synthetic-david/pkg/jenkins"
 	"github.com/ifosch/synthetic-david/pkg/slack"
 )
 
@@ -21,8 +22,12 @@ func main() {
 		log.Fatalf("No SLACK_TOKEN environment variable defined")
 	}
 	debug := false
+
 	client := slack.NewChat(slackToken, true, debug)
 	client.RegisterMessageProcessor(slack.Mentioned(slack.Contains(replyHello, "hello")))
 	client.RegisterMessageProcessor(slack.NotMentioned(slack.Contains(reactHello, "hello")))
+
+	jenkins.Register(client)
+
 	client.Start()
 }

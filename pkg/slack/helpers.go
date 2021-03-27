@@ -26,3 +26,15 @@ func RemoveWord(text string, word string) string {
 	}
 	return strings.Join(slice, " ")
 }
+
+// InStringSlice ...
+func InStringSlice(slice []string, elem string) bool {
+	found := false
+	for _, i := range slice {
+		if i == elem {
+			found = true
+			break
+		}
+	}
+	return found
+}

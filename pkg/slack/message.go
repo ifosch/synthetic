@@ -75,6 +75,11 @@ func (m *Message) React(reaction string) {
 	m.chat.api.AddReaction(reaction, slack.ItemRef{Channel: m.event.Channel, Timestamp: m.event.Timestamp})
 }
 
+// Unreact ...
+func (m *Message) Unreact(reaction string) {
+	m.chat.api.RemoveReaction(reaction, slack.ItemRef{Channel: m.event.Channel, Timestamp: m.event.Timestamp})
+}
+
 // ClearMention ...
 func (m *Message) ClearMention() string {
 	if !m.Mention {
