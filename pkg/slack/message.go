@@ -74,3 +74,11 @@ func (m *Message) Reply(msg string, inThread bool) {
 func (m *Message) React(reaction string) {
 	m.chat.api.AddReaction(reaction, slack.ItemRef{Channel: m.event.Channel, Timestamp: m.event.Timestamp})
 }
+
+// ClearMention ...
+func (m *Message) ClearMention() string {
+	if !m.Mention {
+		return m.Text
+	}
+	return RemoveWord(m.Text, fmt.Sprintf("<@%v>", m.chat.botID))
+}
