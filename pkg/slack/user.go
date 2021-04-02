@@ -6,14 +6,16 @@ import (
 	"github.com/slack-go/slack"
 )
 
-// User is ...
+// User is a weapper over slack-go's User object. It provides some
+// utility methods over the User information.
 type User struct {
 	slackUser *slack.User
 	Name      string
 }
 
-// NewUserFromID ...
-func NewUserFromID(id string, api *slack.Client) (user *User, err error) {
+// NewUserFromID returns a User object wrapping the user identified by
+// `id`.
+func NewUserFromID(id string, api IClient) (user *User, err error) {
 	userInfo, err := api.GetUserInfo(id)
 	if err != nil {
 		return nil, err

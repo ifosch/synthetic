@@ -3,11 +3,20 @@ package slack
 import (
 	"log"
 	"os"
+	"reflect"
+	"runtime"
 
 	"github.com/slack-go/slack"
 )
 
-// LogMessage ...
+// getProcessorName is a helper to calculate the processor name from
+// the function name. This is to be changed or removed as soon as
+// processors become something better defined.
+func getProcessorName(f interface{}) string {
+	return runtime.FuncForPC(reflect.ValueOf(f).Pointer()).Name()
+}
+
+// LogMessage is a message processor to log the message received.
 func LogMessage(msg *Message) {
 	thread := ""
 	if msg.Thread {
@@ -16,16 +25,17 @@ func LogMessage(msg *Message) {
 	log.Printf("Message: '%v' from '%v' in %v'%v'\n", msg.Text, msg.User.Name, thread, msg.Conversation.Name)
 }
 
-// Chat is a ...
+// Chat represents the whole chat connection providing methods to
+// interact with the chat system.
 type Chat struct {
-	api                  *slack.Client
-	rtm                  *slack.RTM
+	api                  IClient
+	rtm                  IRTM
 	defaultReplyInThread bool
 	processors           map[string][]func(*Message)
 	botID                string
 }
 
-// NewChat ...
+// NewChat is the constructor for the Chat object.
 func NewChat(token string, defaultReplyInThread bool, debug bool) (chat *Chat) {
 	api := slack.New(
 		token,
@@ -47,22 +57,27 @@ func NewChat(token string, defaultReplyInThread bool, debug bool) (chat *Chat) {
 	return
 }
 
-// RegisterMessageProcessor ...
+// IncomingEvents returns the channel to the chat system events.
+func (c *Chat) IncomingEvents() chan slack.RTMEvent {
+	return c.rtm.(*slack.RTM).IncomingEvents
+}
+
+// RegisterMessageProcessor allows to add more message processors.
 func (c *Chat) RegisterMessageProcessor(processor func(*Message)) {
 	c.processors["message"] = append(c.processors["message"], processor)
 	log.Printf("%v function registered", getProcessorName(processor))
 }
 
-// Start ...
+// Start initializes the chat connection.
 func (c *Chat) Start() {
 	go c.rtm.ManageConnection()
 
-	for msg := range c.rtm.IncomingEvents {
+	for msg := range c.IncomingEvents() {
 		c.Process(msg)
 	}
 }
 
-// Process ...
+// Process runs the message processing for the chat system.
 func (c *Chat) Process(msg slack.RTMEvent) {
 	switch ev := msg.Data.(type) {
 	case *slack.MessageEvent:

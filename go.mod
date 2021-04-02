@@ -1,4 +1,4 @@
-module github.com/ifosch/synthetic-david
+module github.com/ifosch/synthetic
 
 go 1.16
 

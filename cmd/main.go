@@ -4,8 +4,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/ifosch/synthetic-david/pkg/jenkins"
-	"github.com/ifosch/synthetic-david/pkg/slack"
+	"github.com/ifosch/synthetic/pkg/jenkins"
+	"github.com/ifosch/synthetic/pkg/slack"
 )
 
 func replyHello(msg *slack.Message) {

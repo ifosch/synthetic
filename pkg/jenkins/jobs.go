@@ -2,7 +2,6 @@ package jenkins
 
 import (
 	jk "github.com/ifosch/jk/pkg/jenkins"
-	"github.com/ifosch/synthetic-david/pkg/slack"
 )
 
 // Jobs ...
@@ -27,9 +26,17 @@ func (jobs *Jobs) AddJob(name string, runner func([]string, map[string]string, c
 	jobs.jobNames = append(jobs.jobNames, name)
 }
 
-// JobIsPresent ...
+// JobIsPresent checks for presence of a `name` job in the `Jobs`
+// list.
 func (jobs *Jobs) JobIsPresent(name string) bool {
-	return slack.InStringSlice(jobs.jobNames, name)
+	found := false
+	for _, i := range jobs.jobNames {
+		if i == name {
+			found = true
+			break
+		}
+	}
+	return found
 }
 
 // Len ...

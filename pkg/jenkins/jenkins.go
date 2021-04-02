@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	jk "github.com/ifosch/jk/pkg/jenkins"
-	"github.com/ifosch/synthetic-david/pkg/slack"
+	"github.com/ifosch/synthetic/pkg/slack"
 )
 
 func runJob(jobName string, j *jk.Jenkins) func([]string, map[string]string, chan string) {

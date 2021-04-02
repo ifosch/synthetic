@@ -2,7 +2,8 @@ package slack
 
 import "strings"
 
-// Contains ...
+// Contains returns a processor that runs the `processor` if the
+// message contains the `catch` string.
 func Contains(processor func(*Message), catch string) func(*Message) {
 	return func(msg *Message) {
 		if strings.Contains(msg.Text, catch) {
@@ -11,7 +12,8 @@ func Contains(processor func(*Message), catch string) func(*Message) {
 	}
 }
 
-// Mentioned ...
+// Mentioned returns a processor that runs the `processor` if the
+// message is mentioning the bot.
 func Mentioned(processor func(*Message)) func(*Message) {
 	return func(msg *Message) {
 		if msg.Mention {
@@ -20,7 +22,8 @@ func Mentioned(processor func(*Message)) func(*Message) {
 	}
 }
 
-// NotMentioned ...
+// NotMentioned returns a processor that runs the `processor` if the
+// message is not mentioning the bot.
 func NotMentioned(processor func(*Message)) func(*Message) {
 	return func(msg *Message) {
 		if !msg.Mention {

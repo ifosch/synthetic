@@ -1,17 +1,11 @@
 package slack
 
 import (
-	"reflect"
-	"runtime"
 	"strings"
 )
 
-// getProcessorName ...
-func getProcessorName(f interface{}) string {
-	return runtime.FuncForPC(reflect.ValueOf(f).Pointer()).Name()
-}
-
-// RemoveWord ...
+// RemoveWord removes `word` from `text` and returns the result. Note
+// this uses a single space to split the words in `text`.
 func RemoveWord(text string, word string) string {
 	slice := strings.Split(text, " ")
 	i := -1
@@ -25,16 +19,4 @@ func RemoveWord(text string, word string) string {
 		slice = append(slice[:i], slice[i+1:]...)
 	}
 	return strings.Join(slice, " ")
-}
-
-// InStringSlice ...
-func InStringSlice(slice []string, elem string) bool {
-	found := false
-	for _, i := range slice {
-		if i == elem {
-			found = true
-			break
-		}
-	}
-	return found
 }

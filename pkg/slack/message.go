@@ -7,7 +7,8 @@ import (
 	"github.com/slack-go/slack"
 )
 
-// Message is ...
+// Message contains all the information about a message the bot was
+// notified about.
 type Message struct {
 	event        *slack.MessageEvent
 	chat         *Chat
@@ -19,7 +20,7 @@ type Message struct {
 	Text         string
 }
 
-// ReadMessage ...
+// ReadMessage generates the `Message` from a message event.
 func ReadMessage(event *slack.MessageEvent, chat *Chat) (msg *Message, err error) {
 	thread := false
 	if event.ClientMsgID == "" {
@@ -57,7 +58,8 @@ func ReadMessage(event *slack.MessageEvent, chat *Chat) (msg *Message, err error
 	}, nil
 }
 
-// Reply ...
+// Reply send the `msg` string as a reply to the message, in a thread
+// if `inThread` is true.
 func (m *Message) Reply(msg string, inThread bool) {
 	var message *slack.OutgoingMessage
 	if inThread || m.Thread {
@@ -70,17 +72,17 @@ func (m *Message) Reply(msg string, inThread bool) {
 	m.chat.rtm.SendMessage(message)
 }
 
-// React ...
+// React adds the `reaction` reaction to the message.
 func (m *Message) React(reaction string) {
 	m.chat.api.AddReaction(reaction, slack.ItemRef{Channel: m.event.Channel, Timestamp: m.event.Timestamp})
 }
 
-// Unreact ...
+// Unreact removes the `reaction` reaction from the message.
 func (m *Message) Unreact(reaction string) {
 	m.chat.api.RemoveReaction(reaction, slack.ItemRef{Channel: m.event.Channel, Timestamp: m.event.Timestamp})
 }
 
-// ClearMention ...
+// ClearMention returns the message text without the bot's username.
 func (m *Message) ClearMention() string {
 	if !m.Mention {
 		return m.Text

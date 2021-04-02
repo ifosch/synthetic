@@ -6,13 +6,16 @@ import (
 	"github.com/slack-go/slack"
 )
 
-// Conversation is ...
+// Conversation is a wrapper over slack-go's Channel object. It
+// provides an abstraction layer over channels, group conversations
+// and direct chats.
 type Conversation struct {
 	slackChannel *slack.Channel
 	Name         string
 }
 
-// NewConversationFromID ...
+// NewConversationFromID returns a Conversation object wrapping the
+// channel, group conversation, or direct chat identified by `id`.
 func NewConversationFromID(id string, api IClient) (conversation *Conversation, err error) {
 	conversationInfo, err := api.GetConversationInfo(id, false)
 	if err != nil {
