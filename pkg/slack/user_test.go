@@ -16,8 +16,8 @@ func TestNewUserFromID(t *testing.T) {
 			t.Logf("NewUserFromID errored for %v: %v", testID, err)
 			t.Fail()
 		}
-		if user.Name != data[1] {
-			t.Logf("User name was %v, instead of expected %v", user.Name, data[1])
+		if user.name != data[1] {
+			t.Logf("User name was %v, instead of expected %v", user.name, data[1])
 			t.Fail()
 		}
 	}

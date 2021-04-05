@@ -11,7 +11,7 @@ import (
 // and direct chats.
 type Conversation struct {
 	slackChannel *slack.Channel
-	Name         string
+	name         string
 }
 
 // NewConversationFromID returns a Conversation object wrapping the
@@ -30,4 +30,9 @@ func NewConversationFromID(id string, api IClient) (conversation *Conversation, 
 	}
 	conversation = &Conversation{conversationInfo, conversationName}
 	return conversation, nil
+}
+
+// Name returns the name of the conversation.
+func (c *Conversation) Name() string {
+	return c.name
 }

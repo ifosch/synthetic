@@ -3,6 +3,7 @@ package slack
 import (
 	"testing"
 
+	"github.com/ifosch/synthetic/pkg/synthetic"
 	"github.com/slack-go/slack"
 )
 
@@ -12,14 +13,14 @@ type EventMessageCase struct {
 }
 
 func sameConversations(a, b *Conversation) bool {
-	if a != nil && b != nil && a.Name == b.Name {
+	if a != nil && b != nil && a.Name() == b.Name() {
 		return true
 	}
 	return false
 }
 
 func sameUsers(a, b *User) bool {
-	if a != nil && b != nil && a.Name == b.Name {
+	if a != nil && b != nil && a.Name() == b.Name() {
 		return true
 	}
 	return false
@@ -29,7 +30,7 @@ func sameMessages(a, b *Message) bool {
 	if a != nil && b != nil {
 		return true
 	}
-	if a.Completed != b.Completed || a.Thread != b.Thread || a.Mention != b.Mention || !sameUsers(a.User, b.User) || !sameConversations(a.Conversation, b.Conversation) || a.Text != b.Text {
+	if a.Completed != b.Completed || a.thread != b.thread || a.mention != b.mention || !sameUsers(a.user, b.user) || !sameConversations(a.conversation, b.conversation) || a.text != b.text {
 		return false
 	}
 	return true
@@ -82,7 +83,7 @@ func TestReadMessage(t *testing.T) {
 		api:                  client,
 		rtm:                  nil,
 		defaultReplyInThread: false,
-		processors:           map[string][]func(*Message){},
+		processors:           map[string][]func(synthetic.Message){},
 		botID:                "me",
 	}
 	user, _ := NewUserFromID("U000001", client)
@@ -93,44 +94,44 @@ func TestReadMessage(t *testing.T) {
 			event: messageEvents[0],
 			expected: &Message{
 				Completed:    false,
-				Thread:       false,
-				Mention:      false,
-				User:         nil,
-				Conversation: nil,
-				Text:         "",
+				thread:       false,
+				mention:      false,
+				user:         nil,
+				conversation: nil,
+				text:         "",
 			},
 		},
 		"Threaded message": &EventMessageCase{
 			event: messageEvents[1],
 			expected: &Message{
 				Completed:    true,
-				Thread:       true,
-				Mention:      false,
-				User:         user,
-				Conversation: conversation,
-				Text:         "",
+				thread:       true,
+				mention:      false,
+				user:         user,
+				conversation: conversation,
+				text:         "",
 			},
 		},
 		"Non-threaded message": &EventMessageCase{
 			event: messageEvents[2],
 			expected: &Message{
 				Completed:    true,
-				Thread:       false,
-				Mention:      false,
-				User:         user,
-				Conversation: conversation,
-				Text:         "",
+				thread:       false,
+				mention:      false,
+				user:         user,
+				conversation: conversation,
+				text:         "",
 			},
 		},
 		"Message with mention": &EventMessageCase{
 			event: messageEvents[3],
 			expected: &Message{
 				Completed:    true,
-				Thread:       false,
-				Mention:      true,
-				User:         user,
-				Conversation: conversation,
-				Text:         "<@me>",
+				thread:       false,
+				mention:      true,
+				user:         user,
+				conversation: conversation,
+				text:         "<@me>",
 			},
 		},
 	}
@@ -155,7 +156,7 @@ func TestReply(t *testing.T) {
 		api:                  client,
 		rtm:                  rtm,
 		defaultReplyInThread: false,
-		processors:           map[string][]func(*Message){},
+		processors:           map[string][]func(synthetic.Message){},
 		botID:                "me",
 	}
 	messageEvents := messageEvents()
@@ -173,8 +174,8 @@ func TestReply(t *testing.T) {
 		}
 		reply := rtm.messagesSent[0]
 		if message.Completed {
-			if reply.Channel != message.Conversation.slackChannel.ID {
-				t.Logf("Wrong channel ID used in reply %v should be %v", reply.Channel, message.Conversation.slackChannel.ID)
+			if reply.Channel != message.conversation.slackChannel.ID {
+				t.Logf("Wrong channel ID used in reply %v should be %v", reply.Channel, message.conversation.slackChannel.ID)
 				t.Fail()
 			}
 			if reply.Text != "reply" {
@@ -202,7 +203,7 @@ func TestReactUnreact(t *testing.T) {
 		api:                  client,
 		rtm:                  rtm,
 		defaultReplyInThread: false,
-		processors:           map[string][]func(*Message){},
+		processors:           map[string][]func(synthetic.Message){},
 		botID:                "me",
 	}
 	messageEvents := messageEvents()

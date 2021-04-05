@@ -6,13 +6,14 @@ import (
 
 	"github.com/ifosch/synthetic/pkg/jenkins"
 	"github.com/ifosch/synthetic/pkg/slack"
+	"github.com/ifosch/synthetic/pkg/synthetic"
 )
 
-func replyHello(msg *slack.Message) {
-	msg.Reply("hello", msg.Thread)
+func replyHello(msg synthetic.Message) {
+	msg.Reply("hello", msg.Thread())
 }
 
-func reactHello(msg *slack.Message) {
+func reactHello(msg synthetic.Message) {
 	msg.React("wave")
 }
 

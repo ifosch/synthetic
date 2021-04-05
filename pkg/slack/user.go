@@ -10,7 +10,7 @@ import (
 // utility methods over the User information.
 type User struct {
 	slackUser *slack.User
-	Name      string
+	name      string
 }
 
 // NewUserFromID returns a User object wrapping the user identified by
@@ -22,4 +22,9 @@ func NewUserFromID(id string, api IClient) (user *User, err error) {
 	}
 	user = &User{userInfo, fmt.Sprintf("@%v", userInfo.Name)}
 	return user, err
+}
+
+// Name returns the name of the user.
+func (u *User) Name() string {
+	return u.name
 }

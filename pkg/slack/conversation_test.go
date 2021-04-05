@@ -18,8 +18,8 @@ func TestNewConversationFromID(t *testing.T) {
 			t.Logf("NewConversationFromID errored for %v: %v", testID, err)
 			t.Fail()
 		}
-		if conversation.Name != data[1] {
-			t.Logf("Conversation name was %v, instead of expected %v", conversation.Name, data[1])
+		if conversation.name != data[1] {
+			t.Logf("Conversation name was %v, instead of expected %v", conversation.name, data[1])
 			t.Fail()
 		}
 	}

@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"runtime"
 
+	"github.com/ifosch/synthetic/pkg/synthetic"
 	"github.com/slack-go/slack"
 )
 
@@ -17,12 +18,12 @@ func getProcessorName(f interface{}) string {
 }
 
 // LogMessage is a message processor to log the message received.
-func LogMessage(msg *Message) {
+func LogMessage(msg synthetic.Message) {
 	thread := ""
-	if msg.Thread {
+	if msg.Thread() {
 		thread = "a thread in "
 	}
-	log.Printf("Message: '%v' from '%v' in %v'%v'\n", msg.Text, msg.User.Name, thread, msg.Conversation.Name)
+	log.Printf("Message: '%v' from '%v' in %v'%v'\n", msg.Text(), msg.User().Name(), thread, msg.Conversation().Name())
 }
 
 // Chat represents the whole chat connection providing methods to
@@ -31,7 +32,7 @@ type Chat struct {
 	api                  IClient
 	rtm                  IRTM
 	defaultReplyInThread bool
-	processors           map[string][]func(*Message)
+	processors           map[string][]func(synthetic.Message)
 	botID                string
 }
 
@@ -42,8 +43,8 @@ func NewChat(token string, defaultReplyInThread bool, debug bool) (chat *Chat) {
 		slack.OptionDebug(debug),
 		slack.OptionLog(log.New(os.Stdout, "slack-bot: ", log.Lshortfile|log.LstdFlags)),
 	)
-	processors := map[string][]func(*Message){
-		"message": []func(*Message){},
+	processors := map[string][]func(synthetic.Message){
+		"message": []func(synthetic.Message){},
 	}
 	chat = &Chat{
 		api:                  api,
@@ -63,7 +64,7 @@ func (c *Chat) IncomingEvents() chan slack.RTMEvent {
 }
 
 // RegisterMessageProcessor allows to add more message processors.
-func (c *Chat) RegisterMessageProcessor(processor func(*Message)) {
+func (c *Chat) RegisterMessageProcessor(processor func(synthetic.Message)) {
 	c.processors["message"] = append(c.processors["message"], processor)
 	log.Printf("%v function registered", getProcessorName(processor))
 }
