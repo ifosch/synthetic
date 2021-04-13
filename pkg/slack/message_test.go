@@ -38,7 +38,7 @@ func sameMessages(a, b *Message) bool {
 
 func messageEvents() []*slack.MessageEvent {
 	return []*slack.MessageEvent{
-		&slack.MessageEvent{
+		{
 			Msg: slack.Msg{
 				ClientMsgID:     "",
 				ThreadTimestamp: "",
@@ -47,7 +47,7 @@ func messageEvents() []*slack.MessageEvent {
 				Text:            "",
 			},
 		},
-		&slack.MessageEvent{
+		{
 			Msg: slack.Msg{
 				ClientMsgID:     "M000001",
 				ThreadTimestamp: "165783949832",
@@ -56,7 +56,7 @@ func messageEvents() []*slack.MessageEvent {
 				Text:            "",
 			},
 		},
-		&slack.MessageEvent{
+		{
 			Msg: slack.Msg{
 				ClientMsgID:     "M000001",
 				ThreadTimestamp: "",
@@ -65,7 +65,7 @@ func messageEvents() []*slack.MessageEvent {
 				Text:            "",
 			},
 		},
-		&slack.MessageEvent{
+		{
 			Msg: slack.Msg{
 				ClientMsgID:     "M000001",
 				ThreadTimestamp: "",
@@ -90,7 +90,7 @@ func TestReadMessage(t *testing.T) {
 	conversation, _ := NewConversationFromID("CH00001", client)
 	messageEvents := messageEvents()
 	tc := map[string]*EventMessageCase{
-		"Incomplete message": &EventMessageCase{
+		"Incomplete message": {
 			event: messageEvents[0],
 			expected: &Message{
 				Completed:    false,
@@ -101,7 +101,7 @@ func TestReadMessage(t *testing.T) {
 				text:         "",
 			},
 		},
-		"Threaded message": &EventMessageCase{
+		"Threaded message": {
 			event: messageEvents[1],
 			expected: &Message{
 				Completed:    true,
@@ -112,7 +112,7 @@ func TestReadMessage(t *testing.T) {
 				text:         "",
 			},
 		},
-		"Non-threaded message": &EventMessageCase{
+		"Non-threaded message": {
 			event: messageEvents[2],
 			expected: &Message{
 				Completed:    true,
@@ -123,7 +123,7 @@ func TestReadMessage(t *testing.T) {
 				text:         "",
 			},
 		},
-		"Message with mention": &EventMessageCase{
+		"Message with mention": {
 			event: messageEvents[3],
 			expected: &Message{
 				Completed:    true,

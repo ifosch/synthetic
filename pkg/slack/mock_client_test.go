@@ -46,7 +46,7 @@ func (c *MockClient) RemoveReaction(reaction string, item slack.ItemRef) error {
 
 func (c *MockClient) reset() {
 	c.channels = map[string]*slack.Channel{
-		"CH00001": &slack.Channel{
+		"CH00001": {
 			GroupConversation: slack.GroupConversation{
 				Conversation: slack.Conversation{
 					ID: "CH00001",
@@ -58,7 +58,7 @@ func (c *MockClient) reset() {
 			},
 			IsChannel: true,
 		},
-		"DM00001": &slack.Channel{
+		"DM00001": {
 			GroupConversation: slack.GroupConversation{
 				Conversation: slack.Conversation{
 					ID: "DM00001",
@@ -66,7 +66,7 @@ func (c *MockClient) reset() {
 			},
 			IsChannel: false,
 		},
-		"GR00001": &slack.Channel{
+		"GR00001": {
 			GroupConversation: slack.GroupConversation{
 				Conversation: slack.Conversation{
 					ID: "GR00001",
@@ -80,7 +80,7 @@ func (c *MockClient) reset() {
 		},
 	}
 	c.users = map[string]*slack.User{
-		"U000001": &slack.User{
+		"U000001": {
 			ID:   "U000001",
 			Name: "username",
 		},

@@ -6,7 +6,7 @@ import (
 
 func TestNewUserFromID(t *testing.T) {
 	tc := map[string][]string{
-		"U000001": []string{"U000001", "@username"},
+		"U000001": {"U000001", "@username"},
 	}
 
 	client := NewMockClient()

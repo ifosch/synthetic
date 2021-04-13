@@ -6,9 +6,9 @@ import (
 
 func TestNewConversationFromID(t *testing.T) {
 	tc := map[string][]string{
-		"Channel":        []string{"CH00001", "#test"},
-		"Direct Message": []string{"DM00001", "DM"},
-		"Group Message":  []string{"GR00001", "Group messaging with: @some @users"},
+		"Channel":        {"CH00001", "#test"},
+		"Direct Message": {"DM00001", "DM"},
+		"Group Message":  {"GR00001", "Group messaging with: @some @users"},
 	}
 
 	client := NewMockClient()

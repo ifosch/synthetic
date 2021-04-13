@@ -44,7 +44,7 @@ func NewChat(token string, defaultReplyInThread bool, debug bool) (chat *Chat) {
 		slack.OptionLog(log.New(os.Stdout, "slack-bot: ", log.Lshortfile|log.LstdFlags)),
 	)
 	processors := map[string][]func(synthetic.Message){
-		"message": []func(synthetic.Message){},
+		"message": {},
 	}
 	chat = &Chat{
 		api:                  api,

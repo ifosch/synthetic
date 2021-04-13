@@ -6,7 +6,7 @@ import (
 
 func TestRemoveWord(t *testing.T) {
 	tc := map[string][]string{
-		"Simple removal": []string{"This is a sentence", "This", "is a sentence"},
+		"Simple removal": {"This is a sentence", "This", "is a sentence"},
 	}
 
 	for testID, data := range tc {
