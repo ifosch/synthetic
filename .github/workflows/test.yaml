@@ -13,14 +13,20 @@ jobs:
         with:
           go-version: '^1.16'
       -
-        name: Install gcov2lcov
-        run: go get -u github.com/jandelgado/gcov2lcov
+        name: Install dependencies
+        run: |
+          go mod download
       -
-        name: Run tests
-        run: go test -v -coverprofile=coverage.out ./... && gcov2lcov -infile=coverage.out -outfile=coverage.lcov
+        name: Run Unit tests
+        run: |
+          go test -race -covermode atomic -coverprofile=covprofile ./...
       -
-        name: CoverAlls
-        uses: coverallsapp/github-action@master
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          path-to-lcov: coverage.lcov
+        name: Install goveralls
+        env:
+          GO111MODULE: off
+        run: go get github.com/mattn/goveralls
+      -
+        name: Send coverage
+        env:
+          COVERALLS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: goveralls -coverprofile=covprofile -service=github
