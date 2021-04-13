@@ -8,10 +8,11 @@ import (
 	"strings"
 
 	jk "github.com/ifosch/jk/pkg/jenkins"
-	"github.com/ifosch/synthetic-david/pkg/slack"
+	"github.com/ifosch/synthetic/pkg/slack"
+	"github.com/ifosch/synthetic/pkg/synthetic"
 )
 
-func runJob(jobName string, j *jk.Jenkins) func([]string, map[string]string, chan string) {
+func runJob(jobName string, j AutomationServer) func([]string, map[string]string, chan string) {
 	return func(params []string, args map[string]string, responses chan string) {
 		log.Println(jobName, "job run: ", params, args)
 		out := make(chan jk.Message)
@@ -30,20 +31,20 @@ func runJob(jobName string, j *jk.Jenkins) func([]string, map[string]string, cha
 	}
 }
 
-// Jenkins ...
+// Jenkins is the object to handle the Jenkins connection.
 type Jenkins struct {
-	jk   *jk.Jenkins
+	jk   AutomationServer
 	jobs *Jobs
 }
 
-// Init ...
+// Init connects to Jenkins and gathers the data from it.
 func (j *Jenkins) Init() (err error) {
 	j.jk, err = jk.Connect()
 	j.jobs = NewJobs(j.jk)
 	return
 }
 
-// ParseArgs ...
+// ParseArgs provides parameters and options parsing from a string.
 func (j *Jenkins) ParseArgs(input, command string) (job string, params []string, args map[string]string, err error) {
 	params = strings.Split(slack.RemoveWord(input, command), " ")
 	args = map[string]string{}
@@ -76,7 +77,7 @@ func (j *Jenkins) ParseArgs(input, command string) (job string, params []string,
 	return params[0], params[1:], args, nil
 }
 
-// Load ...
+// Load loads all elements from Jenkins.
 func (j *Jenkins) Load() {
 	log.Println("Loading jobs")
 	out := make(chan jk.Message)
@@ -96,13 +97,13 @@ func (j *Jenkins) Load() {
 	log.Printf("Loaded %v jobs\n", j.jobs.Len())
 }
 
-// Describe ...
-func (j *Jenkins) Describe(msg *slack.Message) {
+// Describe replies `msg` with the description of a job defined.
+func (j *Jenkins) Describe(msg synthetic.Message) {
 	job, _, _, err := j.ParseArgs(msg.ClearMention(), "describe")
 	if err != nil {
-		log.Println("Error", err, "parsing", msg.Text)
+		log.Println("Error", err, "parsing", msg.Text())
 		if errors.As(err, &ReplyingError{}) {
-			msg.Reply(err.Error(), msg.Thread)
+			msg.Reply(err.Error(), msg.Thread())
 		}
 		return
 	}
@@ -119,21 +120,23 @@ func (j *Jenkins) Describe(msg *slack.Message) {
 			break
 		}
 	}
-	msg.Reply(description, msg.Thread)
+	msg.Reply(description, msg.Thread())
 }
 
-// List ...
-func (j *Jenkins) List(msg *slack.Message) {
-	msg.Reply(fmt.Sprintf("%v", j.jobs), msg.Thread)
+// List replies `msg` with the list of jobs in the Jenkins instance.
+func (j *Jenkins) List(msg synthetic.Message) {
+	msg.Reply(fmt.Sprintf("%v", j.jobs), msg.Thread())
 }
 
-// Build ...
-func (j *Jenkins) Build(msg *slack.Message) {
+// Build runs the runner function for a specified job, with the
+// parameters and options specified. It receives the job processing
+// updates from Jenkins and reacts and replies with these to `msg`.
+func (j *Jenkins) Build(msg synthetic.Message) {
 	job, params, args, err := j.ParseArgs(msg.ClearMention(), "build")
 	if err != nil {
-		log.Println("Error", err, "parsing", msg.Text)
+		log.Println("Error", err, "parsing", msg.Text())
 		if errors.As(err, &ReplyingError{}) {
-			msg.Reply(err.Error(), msg.Thread)
+			msg.Reply(err.Error(), msg.Thread())
 		}
 		return
 	}
@@ -153,14 +156,14 @@ func (j *Jenkins) Build(msg *slack.Message) {
 	for {
 		resp := <-responses
 		if strings.Contains(resp, "Build queued") {
-			msg.Reply(fmt.Sprintf("Execution for job `%v` was queued", job), msg.Thread)
+			msg.Reply(fmt.Sprintf("Execution for job `%v` was queued", job), msg.Thread())
 			msg.React("stopwatch")
 		} else if strings.Contains(resp, "Build started") {
-			msg.Reply(fmt.Sprintf("Building `%v` with parameters `%v` (%v)", job, args, fmt.Sprintf("%v/job/%v", os.Getenv("JENKINS_URL"), job)), msg.Thread)
+			msg.Reply(fmt.Sprintf("Building `%v` with parameters `%v` (%v)", job, args, fmt.Sprintf("%v/job/%v", os.Getenv("JENKINS_URL"), job)), msg.Thread())
 			msg.Unreact("stopwatch")
 			msg.React("gear")
 		} else if strings.Contains(resp, "Build finished") {
-			msg.Reply(fmt.Sprintf("Job %v completed", job), msg.Thread)
+			msg.Reply(fmt.Sprintf("Job %v completed", job), msg.Thread())
 			msg.Unreact("gear")
 			msg.React("heavy_check_mark")
 			break
@@ -168,7 +171,8 @@ func (j *Jenkins) Build(msg *slack.Message) {
 	}
 }
 
-// Register ...
+// Register loads and initializes the Jenkins object and registers the
+// corresponding message processors with `chat`.
 func Register(client *slack.Chat) {
 	j := Jenkins{}
 	err := j.Init()

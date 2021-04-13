@@ -3,37 +3,48 @@ package slack
 import (
 	"log"
 	"os"
+	"reflect"
+	"runtime"
 
+	"github.com/ifosch/synthetic/pkg/synthetic"
 	"github.com/slack-go/slack"
 )
 
-// LogMessage ...
-func LogMessage(msg *Message) {
-	thread := ""
-	if msg.Thread {
-		thread = "a thread in "
-	}
-	log.Printf("Message: '%v' from '%v' in %v'%v'\n", msg.Text, msg.User.Name, thread, msg.Conversation.Name)
+// getProcessorName is a helper to calculate the processor name from
+// the function name. This is to be changed or removed as soon as
+// processors become something better defined.
+func getProcessorName(f interface{}) string {
+	return runtime.FuncForPC(reflect.ValueOf(f).Pointer()).Name()
 }
 
-// Chat is a ...
+// LogMessage is a message processor to log the message received.
+func LogMessage(msg synthetic.Message) {
+	thread := ""
+	if msg.Thread() {
+		thread = "a thread in "
+	}
+	log.Printf("Message: '%v' from '%v' in %v'%v'\n", msg.Text(), msg.User().Name(), thread, msg.Conversation().Name())
+}
+
+// Chat represents the whole chat connection providing methods to
+// interact with the chat system.
 type Chat struct {
-	api                  *slack.Client
-	rtm                  *slack.RTM
+	api                  IClient
+	rtm                  IRTM
 	defaultReplyInThread bool
-	processors           map[string][]func(*Message)
+	processors           map[string][]func(synthetic.Message)
 	botID                string
 }
 
-// NewChat ...
+// NewChat is the constructor for the Chat object.
 func NewChat(token string, defaultReplyInThread bool, debug bool) (chat *Chat) {
 	api := slack.New(
 		token,
 		slack.OptionDebug(debug),
 		slack.OptionLog(log.New(os.Stdout, "slack-bot: ", log.Lshortfile|log.LstdFlags)),
 	)
-	processors := map[string][]func(*Message){
-		"message": []func(*Message){},
+	processors := map[string][]func(synthetic.Message){
+		"message": []func(synthetic.Message){},
 	}
 	chat = &Chat{
 		api:                  api,
@@ -47,22 +58,27 @@ func NewChat(token string, defaultReplyInThread bool, debug bool) (chat *Chat) {
 	return
 }
 
-// RegisterMessageProcessor ...
-func (c *Chat) RegisterMessageProcessor(processor func(*Message)) {
+// IncomingEvents returns the channel to the chat system events.
+func (c *Chat) IncomingEvents() chan slack.RTMEvent {
+	return c.rtm.(*slack.RTM).IncomingEvents
+}
+
+// RegisterMessageProcessor allows to add more message processors.
+func (c *Chat) RegisterMessageProcessor(processor func(synthetic.Message)) {
 	c.processors["message"] = append(c.processors["message"], processor)
 	log.Printf("%v function registered", getProcessorName(processor))
 }
 
-// Start ...
+// Start initializes the chat connection.
 func (c *Chat) Start() {
 	go c.rtm.ManageConnection()
 
-	for msg := range c.rtm.IncomingEvents {
+	for msg := range c.IncomingEvents() {
 		c.Process(msg)
 	}
 }
 
-// Process ...
+// Process runs the message processing for the chat system.
 func (c *Chat) Process(msg slack.RTMEvent) {
 	switch ev := msg.Data.(type) {
 	case *slack.MessageEvent:
