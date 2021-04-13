@@ -1,7 +1,7 @@
 on:
   push:
     branches:
-      - '*'
+      - master
 
 jobs:
   test:
@@ -16,8 +16,26 @@ jobs:
         with:
           go-version: '^1.16'
       -
+        name: Prepare coverage
+        env:
+          CC_TEST_REPORTER_ID: ${{ secrets.CODECLIMATE_TOKEN }}
+        run: |
+          curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter && \
+          chmod +x ./cc-test-reporter && \
+          ./cc-test-reporter before-build && \
+          go get -u github.com/jandelgado/gcov2lcov
+      -
         name: Run tests
-        run: go test -v ./...
+        run: |
+          go test -v ./... -coverprofile=coverage.out -covermode=atomic && \
+          mkdir -p coverage && \
+          gcov2lcov -infile=coverage.out -outfile=coverage/lcov.info
+      -
+        name: Push coverage
+        env:
+          CC_TEST_REPORTER_ID: ${{ secrets.CODECLIMATE_TOKEN }}
+        run: |
+          ./cc-test-reporter after-build -t lcov
       -
         name: Login to DockerHub
         uses: docker/login-action@v1
