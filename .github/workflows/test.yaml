@@ -1,7 +1,4 @@
-on:
-  push:
-    branches:
-      - '*'
+on: [pull_request]
 
 jobs:
   test:
@@ -18,16 +15,3 @@ jobs:
       -
         name: Run tests
         run: go test -v ./...
-      -
-        name: Login to DockerHub
-        uses: docker/login-action@v1
-        with:
-          username: natx
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-      -
-        name: Build and push
-        uses: docker/build-push-action@v2
-        with:
-          context: .
-          push: true
-          tags: natx/synthetic:latest
