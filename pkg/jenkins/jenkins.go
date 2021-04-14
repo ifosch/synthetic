@@ -141,13 +141,6 @@ func (j *Jenkins) Build(msg synthetic.Message) {
 		return
 	}
 
-	extra := ""
-	if len(params) > 0 {
-		extra = fmt.Sprintf(" with params: %v", params)
-	}
-	if len(args) > 0 {
-		extra = fmt.Sprintf("%v and args: %v", extra, args)
-	}
 	msg.React("+1")
 
 	responses := make(chan string)
