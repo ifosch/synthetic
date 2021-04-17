@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"regexp"
 	"strings"
 
 	jk "github.com/ifosch/jk/pkg/jenkins"
@@ -46,7 +47,8 @@ func (j *Jenkins) Init() (err error) {
 
 // ParseArgs provides parameters and options parsing from a string.
 func (j *Jenkins) ParseArgs(input, command string) (job string, params []string, args map[string]string, err error) {
-	params = strings.Split(slack.RemoveWord(input, command), " ")
+	reduceDupSpaces := regexp.MustCompile(`[ ]{2,}`)
+	params = strings.Split(slack.RemoveWord(reduceDupSpaces.ReplaceAllString(input, " "), command), " ")
 	args = map[string]string{}
 	toRemove := []int{}
 	for i, param := range params {

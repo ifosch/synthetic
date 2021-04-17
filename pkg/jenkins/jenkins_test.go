@@ -8,6 +8,31 @@ import (
 	"testing"
 )
 
+func TestParseArgs(t *testing.T) {
+	log.SetFlags(0)
+	log.SetOutput(ioutil.Discard)
+	expectedJobs := map[string]string{
+		"deploy": "Deploy project",
+	}
+	mas := NewMockAutomationServer(
+		expectedJobs,
+	)
+	j := &Jenkins{
+		jk:   mas,
+		jobs: NewJobs(mas),
+	}
+	j.Load()
+	input := "build  deploy      INDEX=users"
+	command := "build"
+
+	job, _, _, _ := j.ParseArgs(input, command)
+
+	if job != "deploy" {
+		t.Logf("Wrong job parsed '%v' should be 'deploy'", job)
+		t.Fail()
+	}
+}
+
 func TestLoadReload(t *testing.T) {
 	log.SetFlags(0)
 	log.SetOutput(ioutil.Discard)
