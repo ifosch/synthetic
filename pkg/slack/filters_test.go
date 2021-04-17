@@ -65,7 +65,7 @@ func TestMentioned(t *testing.T) {
 	}
 }
 
-func TestnotMentioned(t *testing.T) {
+func TestNotMentioned(t *testing.T) {
 	calls := 0
 	processor := func(synthetic.Message) {
 		calls++
