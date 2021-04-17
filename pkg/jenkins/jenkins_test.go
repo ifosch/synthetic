@@ -8,7 +8,7 @@ import (
 	"testing"
 )
 
-func TestLoad(t *testing.T) {
+func TestLoadReload(t *testing.T) {
 	log.SetFlags(0)
 	log.SetOutput(ioutil.Discard)
 	expectedJobs := map[string]string{
@@ -37,6 +37,34 @@ func TestLoad(t *testing.T) {
 			t.Fail()
 		}
 		i++
+	}
+
+	msg := &MockSyntheticMessage{
+		replies: []string{},
+	}
+
+	j.Reload(msg)
+
+	if j.jobs.Len() != len(expectedJobs) {
+		t.Logf("Wrong number of jobs loaded %v but expected %v", j.jobs.Len(), len(expectedJobs))
+		t.Fail()
+	}
+	i = 0
+	for job := range j.jobs.jobs {
+		if mas.jobs[job] != expectedJobs[job] {
+			t.Logf("Wrong job loaded %v expected %v", mas.jobs[job], expectedJobs[job])
+			t.Fail()
+		}
+		i++
+	}
+	if len(msg.replies) != 1 {
+		t.Logf("Wrong number of replies received %v should be 1", len(msg.replies))
+		t.Fail()
+	}
+	expectedReply := "3 Jenkins jobs reloaded"
+	if msg.replies[0] != expectedReply {
+		t.Logf("Wrong reply '%v' should be '%v'", msg.replies[0], expectedReply)
+		t.Fail()
 	}
 }
 
