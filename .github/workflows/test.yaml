@@ -33,3 +33,110 @@ jobs:
           CC_TEST_REPORTER_ID: ${{ secrets.CODECLIMATE_TOKEN }}
         run: |
           ./cc-test-reporter after-build -t lcov
+  check-formatting:
+    runs-on: ubuntu-latest
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v2
+      -
+        name: Check formatting
+        run: |
+          gofmt -s -e -d -l .
+  check-smells:
+    runs-on: ubuntu-latest
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v2
+      -
+        name: Check code smells
+        run: |
+          go vet ./...
+  check-complexity:
+    runs-on: ubuntu-latest
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v2
+      -
+        name: Install Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: '^1.16'
+      -
+        name: Install gocyclo
+        run: |
+          go get -u github.com/fzipp/gocyclo/cmd/gocyclo@latest
+      -
+        name: Check cyclomatic complexity
+        run: |
+          gocyclo -over 15 .
+  check-style:
+    runs-on: ubuntu-latest
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v2
+      -
+        name: Install Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: '^1.16'
+      -
+        name: Install golint
+        run: |
+          go get -u golang.org/x/lint/golint
+      -
+        name: Check Style
+        run: |
+          golint ./...
+  check-ineffectual-assignments:
+    runs-on: ubuntu-latest
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v2
+      -
+        name: Install Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: '^1.16'
+      -
+        name: Install ineffassign
+        run: |
+          go get -u github.com/gordonklaus/ineffassign
+          go get golang.org/x/net/html
+      -
+        name: Check ineffectual assignments
+        run: |
+          ineffassign ./...
+  check-spelling:
+    runs-on: ubuntu-latest
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v2
+      -
+        name: Install Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: '^1.16'
+      -
+        name: Install spellchecker
+        run: |
+          go get -u github.com/client9/misspell/cmd/misspell
+      -
+        name: Check spelling
+        run: |
+          misspell -error .
+  check-license:
+    runs-on: ubuntu-latest
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v2
+      -
+        name: Check license file is present
+        run: |
+          find . -name LICENSE.md
