@@ -97,6 +97,15 @@ func (j *Jenkins) Load() {
 	log.Printf("Loaded %v jobs\n", j.jobs.Len())
 }
 
+// Reload runs Load again.
+func (j *Jenkins) Reload(msg synthetic.Message) {
+	msg.React("+1")
+	j.jobs.Clear()
+	j.Load()
+	msg.Reply(fmt.Sprintf("%v Jenkins jobs reloaded", j.jobs.Len()), msg.Thread())
+	msg.React("heavy_check_mark")
+}
+
 // Describe replies `msg` with the description of a job defined.
 func (j *Jenkins) Describe(msg synthetic.Message) {
 	job, _, _, err := j.ParseArgs(msg.ClearMention(), "describe")
@@ -178,4 +187,5 @@ func Register(client *slack.Chat) {
 	client.RegisterMessageProcessor(slack.Mentioned(slack.Contains(j.List, "list")))
 	client.RegisterMessageProcessor(slack.Mentioned(slack.Contains(j.Describe, "describe")))
 	client.RegisterMessageProcessor(slack.Mentioned(slack.Contains(j.Build, "build")))
+	client.RegisterMessageProcessor(slack.Mentioned(slack.Contains(j.Reload, "reload")))
 }

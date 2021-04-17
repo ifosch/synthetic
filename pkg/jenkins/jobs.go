@@ -37,6 +37,12 @@ func (jobs *Jobs) JobIsPresent(name string) bool {
 	return found
 }
 
+// Clear flushes the job list.
+func (jobs *Jobs) Clear() {
+	jobs.jobs = map[string]func([]string, map[string]string, chan string){}
+	jobs.jobNames = []string{}
+}
+
 // Len provides the amount of jobs.
 func (jobs *Jobs) Len() int {
 	return len(jobs.jobNames)
