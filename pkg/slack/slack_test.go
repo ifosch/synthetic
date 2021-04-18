@@ -3,7 +3,6 @@ package slack
 import (
 	"io/ioutil"
 	"log"
-	"reflect"
 	"testing"
 	"time"
 
@@ -19,12 +18,15 @@ func TestProcess(t *testing.T) {
 	processedMessages := 0
 	c := &Chat{
 		api:        client,
-		processors: map[string][]func(synthetic.Message){},
+		processors: map[string][]IMessageProcessor{},
 		botID:      "me",
 	}
-	c.RegisterMessageProcessor(func(synthetic.Message) {
-		processedMessages++
-	})
+	c.RegisterMessageProcessor(
+		NewMessageProcessor(
+			"github.com/ifosch/synthetic/pkg/slack.CountProcessedMessages",
+			func(synthetic.Message) { processedMessages++ },
+		),
+	)
 	messageEvent := s.MessageEvent{
 		Msg: s.Msg{
 			ClientMsgID:     "CMID001",
@@ -71,16 +73,18 @@ func TestRegisterMessageProcessor(t *testing.T) {
 	log.SetFlags(0)
 	log.SetOutput(ioutil.Discard)
 	c := &Chat{
-		processors: map[string][]func(synthetic.Message){},
+		processors: map[string][]IMessageProcessor{},
 	}
 
-	processor := LogMessage
-	c.RegisterMessageProcessor(processor)
+	c.RegisterMessageProcessor(
+		NewMessageProcessor(
+			"github.com/ifosch/synthetic/pkg/slack.LogMessage",
+			LogMessage,
+		),
+	)
 
-	fd1 := reflect.ValueOf(processor)
-	fd2 := reflect.ValueOf(c.processors["message"][0])
-	if fd1 != fd2 {
-		t.Logf("Wrong processor registered %v expected %v", fd1, fd2)
+	if c.processors["message"][0].Name() != "github.com/ifosch/synthetic/pkg/slack.LogMessage" {
+		t.Logf("Wrong processor registered '%v' expected 'github.com/ifosch/synthetic/pkg/slack.LogMessage'", c.processors["message"][0].Name())
 		t.Fail()
 	}
 }
