@@ -25,8 +25,18 @@ func main() {
 	debug := false
 
 	client := slack.NewChat(slackToken, true, debug)
-	client.RegisterMessageProcessor(slack.Mentioned(slack.Contains(replyHello, "hello")))
-	client.RegisterMessageProcessor(slack.NotMentioned(slack.Contains(reactHello, "hello")))
+	client.RegisterMessageProcessor(
+		slack.NewMessageProcessor(
+			"github.com/ifosch/synthetic/main.replyHello",
+			slack.Mentioned(slack.Contains(replyHello, "hello")),
+		),
+	)
+	client.RegisterMessageProcessor(
+		slack.NewMessageProcessor(
+			"github.com/ifosch/synthetic/main.reactHello",
+			slack.NotMentioned(slack.Contains(reactHello, "hello")),
+		),
+	)
 
 	jenkins.Register(client)
 

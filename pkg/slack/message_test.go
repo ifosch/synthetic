@@ -3,7 +3,6 @@ package slack
 import (
 	"testing"
 
-	"github.com/ifosch/synthetic/pkg/synthetic"
 	"github.com/slack-go/slack"
 )
 
@@ -83,7 +82,7 @@ func TestReadMessage(t *testing.T) {
 		api:                  client,
 		rtm:                  nil,
 		defaultReplyInThread: false,
-		processors:           map[string][]func(synthetic.Message){},
+		processors:           map[string][]IMessageProcessor{},
 		botID:                "me",
 	}
 	user, _ := NewUserFromID("U000001", client)
@@ -156,7 +155,7 @@ func TestReply(t *testing.T) {
 		api:                  client,
 		rtm:                  rtm,
 		defaultReplyInThread: false,
-		processors:           map[string][]func(synthetic.Message){},
+		processors:           map[string][]IMessageProcessor{},
 		botID:                "me",
 	}
 	messageEvents := messageEvents()
@@ -203,7 +202,7 @@ func TestReactUnreact(t *testing.T) {
 		api:                  client,
 		rtm:                  rtm,
 		defaultReplyInThread: false,
-		processors:           map[string][]func(synthetic.Message){},
+		processors:           map[string][]IMessageProcessor{},
 		botID:                "me",
 	}
 	messageEvents := messageEvents()

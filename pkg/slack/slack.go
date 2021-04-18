@@ -3,19 +3,10 @@ package slack
 import (
 	"log"
 	"os"
-	"reflect"
-	"runtime"
 
 	"github.com/ifosch/synthetic/pkg/synthetic"
 	"github.com/slack-go/slack"
 )
-
-// getProcessorName is a helper to calculate the processor name from
-// the function name. This is to be changed or removed as soon as
-// processors become something better defined.
-func getProcessorName(f interface{}) string {
-	return runtime.FuncForPC(reflect.ValueOf(f).Pointer()).Name()
-}
 
 // LogMessage is a message processor to log the message received.
 func LogMessage(msg synthetic.Message) {
@@ -32,7 +23,7 @@ type Chat struct {
 	api                  IClient
 	rtm                  IRTM
 	defaultReplyInThread bool
-	processors           map[string][]func(synthetic.Message)
+	processors           map[string][]IMessageProcessor
 	botID                string
 }
 
@@ -43,7 +34,7 @@ func NewChat(token string, defaultReplyInThread bool, debug bool) (chat *Chat) {
 		slack.OptionDebug(debug),
 		slack.OptionLog(log.New(os.Stdout, "slack-bot: ", log.Lshortfile|log.LstdFlags)),
 	)
-	processors := map[string][]func(synthetic.Message){
+	processors := map[string][]IMessageProcessor{
 		"message": {},
 	}
 	chat = &Chat{
@@ -54,7 +45,9 @@ func NewChat(token string, defaultReplyInThread bool, debug bool) (chat *Chat) {
 		botID:                "",
 	}
 	chat.rtm = chat.api.NewRTM()
-	chat.RegisterMessageProcessor(LogMessage)
+	chat.RegisterMessageProcessor(
+		NewMessageProcessor("github.com/ifosch/pkg/slack.LogMessage", LogMessage),
+	)
 	return
 }
 
@@ -64,9 +57,9 @@ func (c *Chat) IncomingEvents() chan slack.RTMEvent {
 }
 
 // RegisterMessageProcessor allows to add more message processors.
-func (c *Chat) RegisterMessageProcessor(processor func(synthetic.Message)) {
+func (c *Chat) RegisterMessageProcessor(processor IMessageProcessor) {
 	c.processors["message"] = append(c.processors["message"], processor)
-	log.Printf("%v function registered", getProcessorName(processor))
+	log.Printf("%v function registered", processor.Name())
 }
 
 // Start initializes the chat connection.
@@ -86,8 +79,8 @@ func processMessage(ev *slack.MessageEvent, c *Chat) {
 	}
 	if msg.Completed {
 		for _, processor := range c.processors["message"] {
-			log.Printf("Invoking processor %v", getProcessorName(processor))
-			go processor(msg)
+			log.Printf("Invoking processor %v", processor.Name())
+			go processor.Run(msg)
 		}
 	}
 }

@@ -186,8 +186,8 @@ func Register(client *slack.Chat) {
 
 	j.Load()
 
-	client.RegisterMessageProcessor(slack.Mentioned(slack.Contains(j.List, "list")))
-	client.RegisterMessageProcessor(slack.Mentioned(slack.Contains(j.Describe, "describe")))
-	client.RegisterMessageProcessor(slack.Mentioned(slack.Contains(j.Build, "build")))
-	client.RegisterMessageProcessor(slack.Mentioned(slack.Contains(j.Reload, "reload")))
+	client.RegisterMessageProcessor(slack.NewMessageProcessor("github.com/ifosch/synthetic/pkg/jenkins.List", slack.Mentioned(slack.Contains(j.List, "list"))))
+	client.RegisterMessageProcessor(slack.NewMessageProcessor("github.com/ifosch/synthetic/pkg/jenkins.Describe", slack.Mentioned(slack.Contains(j.Describe, "describe"))))
+	client.RegisterMessageProcessor(slack.NewMessageProcessor("github.com/ifosch/synthetic/pkg/jenkins.Build", slack.Mentioned(slack.Contains(j.Build, "build"))))
+	client.RegisterMessageProcessor(slack.NewMessageProcessor("github.com/ifosch/synthetic/pkg/jenkins.Reload", slack.Mentioned(slack.Contains(j.Reload, "reload"))))
 }
