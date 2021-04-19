@@ -4,7 +4,7 @@ package jenkins
 // instance.
 type Jobs struct {
 	jk       AutomationServer
-	jobs     map[string]func([]string, map[string]string, chan string)
+	jobs     map[string]func(map[string]string, chan string)
 	jobNames []string
 }
 
@@ -12,14 +12,14 @@ type Jobs struct {
 func NewJobs(jk AutomationServer) *Jobs {
 	return &Jobs{
 		jk:       jk,
-		jobs:     map[string]func([]string, map[string]string, chan string){},
+		jobs:     map[string]func(map[string]string, chan string){},
 		jobNames: []string{},
 	}
 }
 
 // AddJob adds a new job to the `Jobs` object, providing the name and
 // the runner function.
-func (jobs *Jobs) AddJob(name string, runner func([]string, map[string]string, chan string)) {
+func (jobs *Jobs) AddJob(name string, runner func(map[string]string, chan string)) {
 	jobs.jobs[name] = runner
 	jobs.jobNames = append(jobs.jobNames, name)
 }
@@ -39,7 +39,7 @@ func (jobs *Jobs) JobIsPresent(name string) bool {
 
 // Clear flushes the job list.
 func (jobs *Jobs) Clear() {
-	jobs.jobs = map[string]func([]string, map[string]string, chan string){}
+	jobs.jobs = map[string]func(map[string]string, chan string){}
 	jobs.jobNames = []string{}
 }
 

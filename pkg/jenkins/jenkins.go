@@ -13,9 +13,9 @@ import (
 	"github.com/ifosch/synthetic/pkg/synthetic"
 )
 
-func runJob(jobName string, j AutomationServer) func([]string, map[string]string, chan string) {
-	return func(params []string, args map[string]string, responses chan string) {
-		log.Println(jobName, "job run: ", params, args)
+func runJob(jobName string, j AutomationServer) func(map[string]string, chan string) {
+	return func(args map[string]string, responses chan string) {
+		log.Println(jobName, "job run: ", args)
 		out := make(chan jk.Message)
 		defer close(out)
 		log.Println("Asking", j, "to run", jobName, "with args", args)
@@ -46,9 +46,9 @@ func (j *Jenkins) Init() (err error) {
 }
 
 // ParseArgs provides parameters and options parsing from a string.
-func (j *Jenkins) ParseArgs(input, command string) (job string, params []string, args map[string]string, err error) {
+func (j *Jenkins) ParseArgs(input, command string) (job string, args map[string]string, err error) {
 	reduceDupSpaces := regexp.MustCompile(`[ ]{2,}`)
-	params = strings.Split(slack.RemoveWord(reduceDupSpaces.ReplaceAllString(input, " "), command), " ")
+	params := strings.Split(slack.RemoveWord(reduceDupSpaces.ReplaceAllString(input, " "), command), " ")
 	args = map[string]string{}
 	toRemove := []int{}
 	for i, param := range params {
@@ -76,7 +76,7 @@ func (j *Jenkins) ParseArgs(input, command string) (job string, params []string,
 		return
 	}
 
-	return params[0], params[1:], args, nil
+	return params[0], args, nil
 }
 
 // Load loads all elements from Jenkins.
@@ -110,7 +110,7 @@ func (j *Jenkins) Reload(msg synthetic.Message) {
 
 // Describe replies `msg` with the description of a job defined.
 func (j *Jenkins) Describe(msg synthetic.Message) {
-	job, _, _, err := j.ParseArgs(msg.ClearMention(), "describe")
+	job, _, err := j.ParseArgs(msg.ClearMention(), "describe")
 	if err != nil {
 		log.Println("Error", err, "parsing", msg.Text())
 		if errors.As(err, &ReplyingError{}) {
@@ -143,7 +143,7 @@ func (j *Jenkins) List(msg synthetic.Message) {
 // parameters and options specified. It receives the job processing
 // updates from Jenkins and reacts and replies with these to `msg`.
 func (j *Jenkins) Build(msg synthetic.Message) {
-	job, params, args, err := j.ParseArgs(msg.ClearMention(), "build")
+	job, args, err := j.ParseArgs(msg.ClearMention(), "build")
 	if err != nil {
 		log.Println("Error", err, "parsing", msg.Text())
 		if errors.As(err, &ReplyingError{}) {
@@ -156,7 +156,7 @@ func (j *Jenkins) Build(msg synthetic.Message) {
 
 	responses := make(chan string)
 	defer close(responses)
-	go j.jobs.jobs[job](params, args, responses)
+	go j.jobs.jobs[job](args, responses)
 	for {
 		resp := <-responses
 		if strings.Contains(resp, "Build queued") {

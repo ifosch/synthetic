@@ -25,7 +25,7 @@ func TestParseArgs(t *testing.T) {
 	input := "build  deploy      INDEX=users"
 	command := "build"
 
-	job, _, _, _ := j.ParseArgs(input, command)
+	job, _, _ := j.ParseArgs(input, command)
 
 	if job != "deploy" {
 		t.Logf("Wrong job parsed '%v' should be 'deploy'", job)
@@ -96,13 +96,13 @@ func TestLoadReload(t *testing.T) {
 func TestDescribe(t *testing.T) {
 	log.SetFlags(0)
 	log.SetOutput(ioutil.Discard)
-	jobs := map[string]string{
+	expectedJobs := map[string]string{
 		"build":  "Build the project",
 		"test":   "Run test suit on the project",
 		"deploy": "Deploy project",
 	}
 	mas := NewMockAutomationServer(
-		jobs,
+		expectedJobs,
 	)
 	j := &Jenkins{
 		jk:   mas,
@@ -112,7 +112,7 @@ func TestDescribe(t *testing.T) {
 		text:    "describe test",
 		replies: []string{},
 	}
-	expectedReply := jobs["test"]
+	expectedReply := expectedJobs["test"]
 
 	j.Load()
 	j.Describe(msg)
@@ -130,14 +130,14 @@ func TestDescribe(t *testing.T) {
 func TestList(t *testing.T) {
 	log.SetFlags(0)
 	log.SetOutput(ioutil.Discard)
-	jobs := map[string]string{
+	expectedJobs := map[string]string{
 		"build":  "Build the project",
 		"test":   "Run test suit on the project",
 		"deploy": "Deploy project",
 	}
 	expectedReply := "build\ndeploy\ntest\n"
 	mas := NewMockAutomationServer(
-		jobs,
+		expectedJobs,
 	)
 	j := &Jenkins{
 		jk:   mas,
@@ -163,13 +163,13 @@ func TestList(t *testing.T) {
 func TestBuild(t *testing.T) {
 	log.SetFlags(0)
 	log.SetOutput(ioutil.Discard)
-	jobs := map[string]string{
+	expectedJobs := map[string]string{
 		"build":  "Build the project",
 		"test":   "Run test suit on the project",
 		"deploy": "Deploy project",
 	}
 	mas := NewMockAutomationServer(
-		jobs,
+		expectedJobs,
 	)
 	j := &Jenkins{
 		jk:   mas,
