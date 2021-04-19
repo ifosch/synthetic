@@ -3,6 +3,7 @@ module github.com/ifosch/synthetic
 go 1.16
 
 require (
-	github.com/ifosch/jk v0.0.0-20200909115549-51bc7948ecbc // indirect
-	github.com/slack-go/slack v0.8.1 // indirect
+	github.com/bndr/gojenkins v1.0.1
+	github.com/slack-go/slack v0.8.1
+	golang.org/x/net v0.0.0-20200904194848-62affa334b73 // indirect
 )
