@@ -12,11 +12,11 @@ import (
 )
 
 type parsingTC struct {
-	input           string
-	command         string
-	expectedJob     string
-	expectedArgs    map[string]string
-	expectedReplies []string
+	input         string
+	command       string
+	expectedJob   string
+	expectedArgs  map[string]string
+	expectedError string
 }
 
 func TestParsing(t *testing.T) {
@@ -32,60 +32,53 @@ func TestParsing(t *testing.T) {
 
 	tcs := []parsingTC{
 		{
-			input:           "build  deploy      INDEX=users",
-			command:         "build",
-			expectedJob:     "deploy",
-			expectedArgs:    map[string]string{"INDEX": "users"},
-			expectedReplies: []string{},
+			input:         "build  deploy      INDEX=users",
+			command:       "build",
+			expectedJob:   "deploy",
+			expectedArgs:  map[string]string{"INDEX": "users"},
+			expectedError: "",
 		},
 		{
-			input:        "describe",
-			command:      "describe",
-			expectedJob:  "",
-			expectedArgs: map[string]string{},
-			expectedReplies: []string{
-				"You must specify, at least, one job. You can use `list` to get a list of defined jobs and `describe <job>` to get all details about a job.",
-			},
+			input:         "describe",
+			command:       "describe",
+			expectedJob:   "",
+			expectedArgs:  map[string]string{},
+			expectedError: "you must specify, at least, one job. You can use `list` to get a list of defined jobs and `describe <job>` to get all details about a job",
 		},
 		{
-			input:        "describe missingjob",
-			command:      "describe",
-			expectedJob:  "missingjob",
-			expectedArgs: map[string]string{},
-			expectedReplies: []string{
-				"The job `missingjob` doesn't exist in current job list. If it's new addition, try using `reload` to refresh the list of jobs.",
-			},
+			input:         "describe missingjob",
+			command:       "describe",
+			expectedJob:   "missingjob",
+			expectedArgs:  map[string]string{},
+			expectedError: "the job `missingjob` doesn't exist in current job list. If it's new addition, try using `reload` to refresh the list of jobs",
 		},
 	}
 
 	for _, test := range tcs {
-		msg := synthetic.NewMockMessage(test.input)
+		job, args, err := j.ParseArgs(test.input, test.command)
 
-		job, args := j.ParseArgs(msg, test.command)
-
-		if job != test.expectedJob {
-			t.Logf("Wrong job parsed '%v' should be '%v'", job, test.expectedJob)
-			t.Fail()
-		}
-		for expectedName, expectedValue := range test.expectedArgs {
-			value, ok := args[expectedName]
-			if !ok {
-				t.Logf("Missing argument '%v'", expectedName)
+		if err != nil {
+			if test.expectedError == "" {
+				t.Logf("Unexpected error %v", err)
 				t.Fail()
 			}
-			if value != expectedValue {
-				t.Logf("Wrong value '%v' for '%v' should be '%v'", value, expectedName, expectedValue)
+		} else if test.expectedError != "" {
+			t.Logf("Expected error '%v' didn't happened", test.expectedError)
+			t.Fail()
+			if job != test.expectedJob {
+				t.Logf("Wrong job parsed '%v' should be '%v'", job, test.expectedJob)
 				t.Fail()
 			}
-		}
-		if len(msg.Replies()) != len(test.expectedReplies) {
-			t.Logf("Wrong number of replies '%v' should be '%v'", len(msg.Replies()), len(test.expectedReplies))
-			t.Fail()
-		}
-		for i, reply := range msg.Replies() {
-			if reply != test.expectedReplies[i] {
-				t.Logf("Wrong reply '%v' should be '%v'", reply, test.expectedReplies[i])
-				t.Fail()
+			for expectedName, expectedValue := range test.expectedArgs {
+				value, ok := args[expectedName]
+				if !ok {
+					t.Logf("Missing argument '%v'", expectedName)
+					t.Fail()
+				}
+				if value != expectedValue {
+					t.Logf("Wrong value '%v' for '%v' should be '%v'", value, expectedName, expectedValue)
+					t.Fail()
+				}
 			}
 		}
 	}

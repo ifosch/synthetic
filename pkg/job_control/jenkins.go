@@ -24,8 +24,7 @@ func (j *Jenkins) Init() (err error) {
 }
 
 // ParseArgs provides parameters and options parsing from a message.
-func (j *Jenkins) ParseArgs(msg synthetic.Message, command string) (job string, args map[string]string) {
-	input := msg.ClearMention()
+func (j *Jenkins) ParseArgs(input, command string) (job string, args map[string]string, err error) {
 	reduceDupSpaces := regexp.MustCompile(`[ ]{2,}`)
 	params := strings.Split(slack.RemoveWord(reduceDupSpaces.ReplaceAllString(input, " "), command), " ")
 	args = map[string]string{}
@@ -40,16 +39,14 @@ func (j *Jenkins) ParseArgs(msg synthetic.Message, command string) (job string, 
 	job = RemoveIndexes(params, toRemove)[0]
 
 	if job == "" {
-		msg.Reply("You must specify, at least, one job. You can use `list` to get a list of defined jobs and `describe <job>` to get all details about a job.", msg.Thread())
-		return
+		return "", nil, fmt.Errorf("you must specify, at least, one job. You can use `list` to get a list of defined jobs and `describe <job>` to get all details about a job")
 	}
 
 	if j.js.GetJob(job) == nil {
-		msg.Reply(fmt.Sprintf("The job `%v` doesn't exist in current job list. If it's new addition, try using `reload` to refresh the list of jobs.", job), msg.Thread())
-		return
+		return "", nil, fmt.Errorf("the job `%v` doesn't exist in current job list. If it's new addition, try using `reload` to refresh the list of jobs", job)
 	}
 
-	return job, args
+	return job, args, nil
 }
 
 // Reload runs Load again.
@@ -68,7 +65,11 @@ func (j *Jenkins) Reload(msg synthetic.Message) {
 
 // Describe replies `msg` with the description of a job defined.
 func (j *Jenkins) Describe(msg synthetic.Message) {
-	job, _ := j.ParseArgs(msg, "describe")
+	job, _, err := j.ParseArgs(msg.ClearMention(), "describe")
+	if err != nil {
+		msg.Reply(fmt.Sprintf("%s", err), msg.Thread())
+		return
+	}
 	msg.Reply(j.js.GetJob(job).Describe(), msg.Thread())
 }
 
@@ -81,7 +82,11 @@ func (j *Jenkins) List(msg synthetic.Message) {
 // the job processing updates from Jenkins and reacts and replies with
 // these to `msg`.
 func (j *Jenkins) Build(msg synthetic.Message) {
-	job, args := j.ParseArgs(msg, "build")
+	job, args, err := j.ParseArgs(msg.ClearMention(), "build")
+	if err != nil {
+		msg.Reply(fmt.Sprintf("%s", err), msg.Thread())
+		return
+	}
 
 	msg.React("+1")
 
