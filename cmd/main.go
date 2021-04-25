@@ -4,7 +4,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/ifosch/synthetic/pkg/jenkins"
+	"github.com/ifosch/synthetic/pkg/job_control"
 	"github.com/ifosch/synthetic/pkg/slack"
 	"github.com/ifosch/synthetic/pkg/synthetic"
 )
@@ -38,7 +38,7 @@ func main() {
 		),
 	)
 
-	jenkins.Register(client)
+	jobcontrol.Register(client)
 
 	client.Start()
 }

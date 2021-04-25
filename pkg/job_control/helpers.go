@@ -1,4 +1,4 @@
-package jenkins
+package jobcontrol
 
 // InIntSlice returns true if the `elem` integer is present in
 // `slice`.
