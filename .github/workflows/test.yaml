@@ -42,7 +42,7 @@ jobs:
       -
         name: Check formatting
         run: |
-          gofmt -s -e -d -l .
+          gofmt -s -e -d -l . | tee /tmp/gofmt.output && [ $(cat /tmp/gofmt.output | wc -l) -eq 0 ]
   check-smells:
     runs-on: ubuntu-latest
     steps:
