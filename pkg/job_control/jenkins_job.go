@@ -66,7 +66,7 @@ func (j *Job) Run(args map[string]string, out chan Update) {
 			return
 		}
 	}
-	update(out, fmt.Sprintf("Job `%v` completed", j.Name()), "heavy_check_mark", true)
+	update(out, fmt.Sprintf("Job `%v` completed with `%v`", j.Name(), build.Raw.Result), "heavy_check_mark", true)
 }
 
 // Describe describes the Job.
