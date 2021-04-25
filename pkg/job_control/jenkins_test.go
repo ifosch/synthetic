@@ -31,14 +31,14 @@ func TestParsing(t *testing.T) {
 	}
 
 	tcs := []parsingTC{
-		parsingTC{
+		{
 			input:           "build  deploy      INDEX=users",
 			command:         "build",
 			expectedJob:     "deploy",
 			expectedArgs:    map[string]string{"INDEX": "users"},
 			expectedReplies: []string{},
 		},
-		parsingTC{
+		{
 			input:        "describe",
 			command:      "describe",
 			expectedJob:  "",
@@ -47,7 +47,7 @@ func TestParsing(t *testing.T) {
 				"You must specify, at least, one job. You can use `list` to get a list of defined jobs and `describe <job>` to get all details about a job.",
 			},
 		},
-		parsingTC{
+		{
 			input:        "describe missingjob",
 			command:      "describe",
 			expectedJob:  "missingjob",
