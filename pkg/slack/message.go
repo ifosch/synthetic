@@ -72,6 +72,7 @@ func ReadMessage(event *slack.MessageEvent, chat *Chat) (msg *Message, err error
 	if err != nil {
 		return nil, err
 	}
+
 	return &Message{
 		event:        event,
 		chat:         chat,
@@ -80,7 +81,7 @@ func ReadMessage(event *slack.MessageEvent, chat *Chat) (msg *Message, err error
 		mention:      strings.Contains(event.Text, fmt.Sprintf("<@%v>", chat.botID)),
 		user:         user,
 		conversation: conversation,
-		text:         event.Text,
+		text:         ReplaceSpace(event.Text),
 	}, nil
 }
 
