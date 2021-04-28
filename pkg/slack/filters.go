@@ -6,6 +6,16 @@ import (
 	"github.com/ifosch/synthetic/pkg/synthetic"
 )
 
+// Exactly returns a processot that runs the `processor` if the
+// message is exactly like the `catch` string.
+func Exactly(processor func(synthetic.Message), catch string) func(synthetic.Message) {
+	return func(msg synthetic.Message) {
+		if msg.ClearMention() == catch {
+			processor(msg)
+		}
+	}
+}
+
 // Contains returns a processor that runs the `processor` if the
 // message contains the `catch` string.
 func Contains(processor func(synthetic.Message), catch string) func(synthetic.Message) {
