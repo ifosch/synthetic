@@ -15,7 +15,7 @@ func (m MockMessage) Reply(msg string, inThread bool) {}
 func (m MockMessage) React(reaction string)           {}
 func (m MockMessage) Unreact(reaction string)         {}
 func (m MockMessage) ClearMention() string {
-	return ""
+	return m.Text()
 }
 func (m MockMessage) Thread() bool {
 	return false
@@ -33,6 +33,23 @@ func (m MockMessage) Conversation() synthetic.Conversation {
 	return nil
 }
 
+func TestExactly(t *testing.T) {
+	calls := 0
+	processor := func(synthetic.Message) {
+		calls++
+	}
+
+	derivedProcessor := Exactly(processor, "test")
+	derivedProcessor(MockMessage{text: "test"})
+	derivedProcessor(MockMessage{text: "test "})
+	derivedProcessor(MockMessage{text: ""})
+
+	if calls != 1 {
+		t.Logf("Wrong number of executions %v should be 1", calls)
+		t.Fail()
+	}
+}
+
 func TestContains(t *testing.T) {
 	calls := 0
 	processor := func(synthetic.Message) {
@@ -41,10 +58,11 @@ func TestContains(t *testing.T) {
 
 	derivedProcessor := Contains(processor, "test")
 	derivedProcessor(MockMessage{text: "test"})
+	derivedProcessor(MockMessage{text: "test "})
 	derivedProcessor(MockMessage{text: ""})
 
-	if calls != 1 {
-		t.Logf("Wrong number of executions %v should be 1", calls)
+	if calls != 2 {
+		t.Logf("Wrong number of executions %v should be 2", calls)
 		t.Fail()
 	}
 }

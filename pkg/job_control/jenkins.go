@@ -117,7 +117,7 @@ func Register(client *slack.Chat) {
 		log.Fatalf("Error: %v", err)
 	}
 
-	client.RegisterMessageProcessor(slack.NewMessageProcessor("github.com/ifosch/synthetic/pkg/jenkins.List", slack.Mentioned(slack.Contains(j.List, "list"))))
+	client.RegisterMessageProcessor(slack.NewMessageProcessor("github.com/ifosch/synthetic/pkg/jenkins.List", slack.Exactly(slack.Mentioned(j.List), "list")))
 	client.RegisterMessageProcessor(slack.NewMessageProcessor("github.com/ifosch/synthetic/pkg/jenkins.Describe", slack.Mentioned(slack.Contains(j.Describe, "describe"))))
 	client.RegisterMessageProcessor(slack.NewMessageProcessor("github.com/ifosch/synthetic/pkg/jenkins.Build", slack.Mentioned(slack.Contains(j.Build, "build"))))
 	client.RegisterMessageProcessor(slack.NewMessageProcessor("github.com/ifosch/synthetic/pkg/jenkins.Reload", slack.Mentioned(slack.Contains(j.Reload, "reload"))))
