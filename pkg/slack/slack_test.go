@@ -11,9 +11,13 @@ import (
 	"github.com/ifosch/synthetic/pkg/synthetic"
 )
 
-func TestProcess(t *testing.T) {
+func disableLogs() {
 	log.SetFlags(0)
 	log.SetOutput(ioutil.Discard)
+}
+
+func TestProcess(t *testing.T) {
+	disableLogs()
 	client := NewMockClient()
 	processedMessages := 0
 	c := &Chat{
@@ -70,8 +74,7 @@ func TestProcess(t *testing.T) {
 }
 
 func TestRegisterMessageProcessor(t *testing.T) {
-	log.SetFlags(0)
-	log.SetOutput(ioutil.Discard)
+	disableLogs()
 	c := &Chat{
 		processors: map[string][]IMessageProcessor{},
 	}

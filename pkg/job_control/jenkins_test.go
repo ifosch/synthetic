@@ -11,6 +11,11 @@ import (
 	"github.com/ifosch/synthetic/pkg/synthetic"
 )
 
+func disableLogs() {
+	log.SetFlags(0)
+	log.SetOutput(ioutil.Discard)
+}
+
 type parsingTC struct {
 	input         string
 	command       string
@@ -20,8 +25,7 @@ type parsingTC struct {
 }
 
 func TestParsing(t *testing.T) {
-	log.SetFlags(0)
-	log.SetOutput(ioutil.Discard)
+	disableLogs()
 	j := &Jenkins{
 		js: NewMockJobServer(
 			map[string]string{
@@ -85,8 +89,7 @@ func TestParsing(t *testing.T) {
 }
 
 func TestLoadReload(t *testing.T) {
-	log.SetFlags(0)
-	log.SetOutput(ioutil.Discard)
+	disableLogs()
 	expectedJobs := map[string]string{
 		"build":  "Build the project",
 		"test":   "Run test suit on the project",
@@ -139,8 +142,7 @@ func TestLoadReload(t *testing.T) {
 }
 
 func TestDescribe(t *testing.T) {
-	log.SetFlags(0)
-	log.SetOutput(ioutil.Discard)
+	disableLogs()
 	expectedJobs := map[string]string{
 		"build":  "Build the project",
 		"test":   "Run test suit on the project",
@@ -167,8 +169,7 @@ func TestDescribe(t *testing.T) {
 }
 
 func TestList(t *testing.T) {
-	log.SetFlags(0)
-	log.SetOutput(ioutil.Discard)
+	disableLogs()
 	expectedJobs := map[string]string{
 		"build":  "Build the project",
 		"test":   "Run test suit on the project",
@@ -196,8 +197,7 @@ func TestList(t *testing.T) {
 }
 
 func TestBuild(t *testing.T) {
-	log.SetFlags(0)
-	log.SetOutput(ioutil.Discard)
+	disableLogs()
 	expectedJobs := map[string]string{
 		"build":  "Build the project",
 		"test":   "Run test suit on the project",
