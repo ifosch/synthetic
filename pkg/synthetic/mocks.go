@@ -31,9 +31,10 @@ type MockMessage struct {
 }
 
 // NewMockMessage is the MockMessage constructor.
-func NewMockMessage(input string) *MockMessage {
+func NewMockMessage(input string, mention bool) *MockMessage {
 	return &MockMessage{
 		text:    input,
+		mention: mention,
 		replies: []string{},
 	}
 }
