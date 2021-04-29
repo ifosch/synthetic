@@ -111,7 +111,7 @@ func TestLoadReload(t *testing.T) {
 		i++
 	}
 
-	msg := synthetic.NewMockMessage("")
+	msg := synthetic.NewMockMessage("", false)
 
 	j.Reload(msg)
 
@@ -151,7 +151,7 @@ func TestDescribe(t *testing.T) {
 			expectedJobs,
 		),
 	}
-	msg := synthetic.NewMockMessage("describe test")
+	msg := synthetic.NewMockMessage("describe test", true)
 	expectedReply := expectedJobs["test"]
 
 	j.Describe(msg)
@@ -179,7 +179,7 @@ func TestList(t *testing.T) {
 			expectedJobs,
 		),
 	}
-	msg := synthetic.NewMockMessage("")
+	msg := synthetic.NewMockMessage("", false)
 
 	j.List(msg)
 
@@ -208,7 +208,7 @@ func TestBuild(t *testing.T) {
 			expectedJobs,
 		),
 	}
-	msg := synthetic.NewMockMessage("build test")
+	msg := synthetic.NewMockMessage("build test", true)
 	expectedReplies := []string{
 		"Execution for job `test` was queued",
 		fmt.Sprintf("Building `test` with parameters `map[]` (%v/job/test)", os.Getenv("JENKINS_URL")),
