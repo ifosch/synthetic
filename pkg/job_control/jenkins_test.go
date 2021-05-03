@@ -88,27 +88,36 @@ func TestParsing(t *testing.T) {
 	}
 }
 
+type loadTC struct {
+	expectedJobs           map[string]string
+	expectedReplyOnReload  string
+	expectedRepliesOnBuild []string
+}
+
 func TestLoadReload(t *testing.T) {
 	disableLogs()
-	expectedJobs := map[string]string{
-		"build":  "Build the project",
-		"test":   "Run test suit on the project",
-		"deploy": "Deploy project",
+	tc := loadTC{
+		expectedJobs: map[string]string{
+			"build":  "Build the project",
+			"test":   "Run test suit on the project",
+			"deploy": "Deploy project",
+		},
+		expectedReplyOnReload: "3 Jenkins jobs reloaded",
 	}
 	j := &Jenkins{
 		js: NewMockJobServer(
-			expectedJobs,
+			tc.expectedJobs,
 		),
 	}
 
-	if j.js.GetJobs().Len() != len(expectedJobs) {
-		t.Logf("Wrong number of jobs loaded %v but expected %v", j.js.GetJobs().Len(), len(expectedJobs))
+	if j.js.GetJobs().Len() != len(tc.expectedJobs) {
+		t.Logf("Wrong number of jobs loaded %v but expected %v", j.js.GetJobs().Len(), len(tc.expectedJobs))
 		t.Fail()
 	}
 	i := 0
-	for job := range expectedJobs {
-		if j.js.GetJob(job).Describe() != expectedJobs[job] {
-			t.Logf("Wrong job loaded %v expected %v", j.js.GetJob(job), expectedJobs[job])
+	for job := range tc.expectedJobs {
+		if j.js.GetJob(job).Describe() != tc.expectedJobs[job] {
+			t.Logf("Wrong job loaded %v expected %v", j.js.GetJob(job), tc.expectedJobs[job])
 			t.Fail()
 		}
 		i++
@@ -118,14 +127,14 @@ func TestLoadReload(t *testing.T) {
 
 	j.Reload(msg)
 
-	if j.js.GetJobs().Len() != len(expectedJobs) {
-		t.Logf("Wrong number of jobs loaded %v but expected %v", j.js.GetJobs().Len(), len(expectedJobs))
+	if j.js.GetJobs().Len() != len(tc.expectedJobs) {
+		t.Logf("Wrong number of jobs loaded %v but expected %v", j.js.GetJobs().Len(), len(tc.expectedJobs))
 		t.Fail()
 	}
 	i = 0
-	for job := range expectedJobs {
-		if j.js.GetJob(job).Describe() != expectedJobs[job] {
-			t.Logf("Wrong job loaded %v expected %v", j.js.GetJob(job).Name(), expectedJobs[job])
+	for job := range tc.expectedJobs {
+		if j.js.GetJob(job).Describe() != tc.expectedJobs[job] {
+			t.Logf("Wrong job loaded %v expected %v", j.js.GetJob(job).Name(), tc.expectedJobs[job])
 			t.Fail()
 		}
 		i++
@@ -134,27 +143,27 @@ func TestLoadReload(t *testing.T) {
 		t.Logf("Wrong number of replies received %v should be 1", len(msg.Replies()))
 		t.Fail()
 	}
-	expectedReply := "3 Jenkins jobs reloaded"
-	if msg.Replies()[0] != expectedReply {
-		t.Logf("Wrong reply '%v' should be '%v'", msg.Replies()[0], expectedReply)
+	if msg.Replies()[0] != tc.expectedReplyOnReload {
+		t.Logf("Wrong reply '%v' should be '%v'", msg.Replies()[0], tc.expectedReplyOnReload)
 		t.Fail()
 	}
 }
 
 func TestDescribe(t *testing.T) {
 	disableLogs()
-	expectedJobs := map[string]string{
-		"build":  "Build the project",
-		"test":   "Run test suit on the project",
-		"deploy": "Deploy project",
+	tc := loadTC{
+		expectedJobs: map[string]string{
+			"build":  "Build the project",
+			"test":   "Run test suit on the project",
+			"deploy": "Deploy project",
+		},
 	}
 	j := &Jenkins{
 		js: NewMockJobServer(
-			expectedJobs,
+			tc.expectedJobs,
 		),
 	}
 	msg := synthetic.NewMockMessage("describe test", true)
-	expectedReply := expectedJobs["test"]
 
 	j.Describe(msg)
 
@@ -162,22 +171,24 @@ func TestDescribe(t *testing.T) {
 		t.Logf("Wrong number of replies %v but expected 1", len(msg.Replies()))
 		t.Fail()
 	}
-	if msg.Replies()[0] != expectedReply {
-		t.Logf("Wrong reply '%v' but expected '%v'", msg.Replies()[0], expectedReply)
+	if msg.Replies()[0] != tc.expectedJobs["test"] {
+		t.Logf("Wrong reply '%v' but expected '%v'", msg.Replies()[0], tc.expectedJobs["test"])
 		t.Fail()
 	}
 }
 
 func TestList(t *testing.T) {
 	disableLogs()
-	expectedJobs := map[string]string{
-		"build":  "Build the project",
-		"test":   "Run test suit on the project",
-		"deploy": "Deploy project",
+	tc := loadTC{
+		expectedJobs: map[string]string{
+			"build":  "Build the project",
+			"test":   "Run test suit on the project",
+			"deploy": "Deploy project",
+		},
 	}
 	j := &Jenkins{
 		js: NewMockJobServer(
-			expectedJobs,
+			tc.expectedJobs,
 		),
 	}
 	msg := synthetic.NewMockMessage("", false)
@@ -188,7 +199,7 @@ func TestList(t *testing.T) {
 		t.Logf("Wrong number of replies %v but expected 1", len(msg.Replies()))
 		t.Fail()
 	}
-	for jobName := range expectedJobs {
+	for jobName := range tc.expectedJobs {
 		if !strings.Contains(msg.Replies()[0], jobName) {
 			t.Logf("Job named '%v' not found in '%v'", jobName, msg.Replies()[0])
 			t.Fail()
@@ -198,32 +209,34 @@ func TestList(t *testing.T) {
 
 func TestBuild(t *testing.T) {
 	disableLogs()
-	expectedJobs := map[string]string{
-		"build":  "Build the project",
-		"test":   "Run test suit on the project",
-		"deploy": "Deploy project",
+	tc := loadTC{
+		expectedJobs: map[string]string{
+			"build":  "Build the project",
+			"test":   "Run test suit on the project",
+			"deploy": "Deploy project",
+		},
+		expectedRepliesOnBuild: []string{
+			"Execution for job `test` was queued",
+			fmt.Sprintf("Building `test` with parameters `map[]` (%v/job/test)", os.Getenv("JENKINS_URL")),
+			"Job test completed",
+		},
 	}
 	j := &Jenkins{
 		js: NewMockJobServer(
-			expectedJobs,
+			tc.expectedJobs,
 		),
 	}
 	msg := synthetic.NewMockMessage("build test", true)
-	expectedReplies := []string{
-		"Execution for job `test` was queued",
-		fmt.Sprintf("Building `test` with parameters `map[]` (%v/job/test)", os.Getenv("JENKINS_URL")),
-		"Job test completed",
-	}
 
 	j.Build(msg)
 
-	if len(msg.Replies()) != len(expectedReplies) {
-		t.Logf("Wrong number of replies %v but expected %v", len(msg.Replies()), len(expectedReplies))
+	if len(msg.Replies()) != len(tc.expectedRepliesOnBuild) {
+		t.Logf("Wrong number of replies %v but expected %v", len(msg.Replies()), len(tc.expectedRepliesOnBuild))
 		t.Fail()
 	}
 	for i, reply := range msg.Replies() {
-		if reply != expectedReplies[i] {
-			t.Logf("Wrong reply '%v' but expected '%v'", reply, expectedReplies[i])
+		if reply != tc.expectedRepliesOnBuild[i] {
+			t.Logf("Wrong reply '%v' but expected '%v'", reply, tc.expectedRepliesOnBuild[i])
 			t.Fail()
 		}
 	}
