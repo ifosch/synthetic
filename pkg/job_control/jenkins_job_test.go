@@ -6,14 +6,23 @@ import (
 	"github.com/bndr/gojenkins"
 )
 
+type jenkinsJobTC struct {
+	job              *gojenkins.Job
+	expectedDescribe string
+}
+
 func TestJob(t *testing.T) {
-	j := &Job{
-		jenkinsJob: &gojenkins.Job{
+	tc := jenkinsJobTC{
+		job: &gojenkins.Job{
 			Raw: &gojenkins.JobResponse{
 				Name:        "myjob",
 				Description: "myjob does something",
 			},
 		},
+		expectedDescribe: "`myjob`: myjob does something\nParameters:\n",
+	}
+	j := &Job{
+		jenkinsJob: tc.job,
 	}
 
 	name := j.Name()
@@ -22,16 +31,16 @@ func TestJob(t *testing.T) {
 
 	describe := j.Describe()
 
-	if name != "myjob" {
-		t.Logf("Wrong job name '%v' should be 'myjob'", name)
+	if name != tc.job.Raw.Name {
+		t.Logf("Wrong job name '%v' should be '%v'", name, tc.job.Raw.Name)
 		t.Fail()
 	}
-	if description != "myjob does something" {
-		t.Logf("Wrong job description '%v' should be 'myjob does something'", description)
+	if description != tc.job.Raw.Description {
+		t.Logf("Wrong job description '%v' should be '%v'", description, tc.job.Raw.Description)
 		t.Fail()
 	}
-	if describe != "`myjob`: myjob does something\nParameters:\n" {
-		t.Logf("Wrong job describe '%v' should be '`myjob`: myjob does something\nParameters\n'", describe)
+	if describe != tc.expectedDescribe {
+		t.Logf("Wrong job describe '%v' should be '%v'", describe, tc.expectedDescribe)
 		t.Fail()
 	}
 }

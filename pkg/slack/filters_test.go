@@ -6,68 +6,131 @@ import (
 	"github.com/ifosch/synthetic/pkg/synthetic"
 )
 
+type filtersTC struct {
+	message       *synthetic.MockMessage
+	expectedCalls int
+}
+
 func TestExactly(t *testing.T) {
-	calls := 0
+	var calls int
 	processor := func(synthetic.Message) {
 		calls++
 	}
+	tcs := []filtersTC{
+		{
+			message:       synthetic.NewMockMessage("test", false),
+			expectedCalls: 1,
+		},
+		{
+			message:       synthetic.NewMockMessage("test ", false),
+			expectedCalls: 0,
+		},
+		{
+			message:       synthetic.NewMockMessage("", false),
+			expectedCalls: 0,
+		},
+	}
 
 	derivedProcessor := Exactly(processor, "test")
-	derivedProcessor(synthetic.NewMockMessage("test", false))
-	derivedProcessor(synthetic.NewMockMessage("test ", false))
-	derivedProcessor(synthetic.NewMockMessage("", false))
+	for _, tc := range tcs {
+		calls = 0
 
-	if calls != 1 {
-		t.Logf("Wrong number of executions %v should be 1", calls)
-		t.Fail()
+		derivedProcessor(tc.message)
+
+		if calls != tc.expectedCalls {
+			t.Logf("Wrong number of executions %v should be %v", calls, tc.expectedCalls)
+			t.Fail()
+		}
 	}
 }
 
 func TestContains(t *testing.T) {
-	calls := 0
+	var calls int
 	processor := func(synthetic.Message) {
 		calls++
 	}
+	tcs := []filtersTC{
+		{
+			message:       synthetic.NewMockMessage("test", false),
+			expectedCalls: 1,
+		},
+		{
+			message:       synthetic.NewMockMessage("test ", false),
+			expectedCalls: 1,
+		},
+		{
+			message:       synthetic.NewMockMessage("", false),
+			expectedCalls: 0,
+		},
+	}
 
 	derivedProcessor := Contains(processor, "test")
-	derivedProcessor(synthetic.NewMockMessage("test", false))
-	derivedProcessor(synthetic.NewMockMessage("test ", false))
-	derivedProcessor(synthetic.NewMockMessage("", false))
+	for _, tc := range tcs {
+		calls = 0
 
-	if calls != 2 {
-		t.Logf("Wrong number of executions %v should be 2", calls)
-		t.Fail()
+		derivedProcessor(tc.message)
+
+		if calls != tc.expectedCalls {
+			t.Logf("Wrong number of executions %v should be %v", calls, tc.expectedCalls)
+			t.Fail()
+		}
 	}
 }
 
 func TestMentioned(t *testing.T) {
-	calls := 0
+	var calls int
 	processor := func(synthetic.Message) {
 		calls++
 	}
+	tcs := []filtersTC{
+		{
+			message:       synthetic.NewMockMessage("", false),
+			expectedCalls: 0,
+		},
+		{
+			message:       synthetic.NewMockMessage("", true),
+			expectedCalls: 1,
+		},
+	}
 
 	derivedProcessor := Mentioned(processor)
-	derivedProcessor(synthetic.NewMockMessage("test", true))
-	derivedProcessor(synthetic.NewMockMessage("", false))
+	for _, tc := range tcs {
+		calls = 0
 
-	if calls != 1 {
-		t.Logf("Wrong number of executions %v should be 1", calls)
-		t.Fail()
+		derivedProcessor(tc.message)
+
+		if calls != tc.expectedCalls {
+			t.Logf("Wrong number of executions %v should be %v", calls, tc.expectedCalls)
+			t.Fail()
+		}
 	}
 }
 
 func TestNotMentioned(t *testing.T) {
-	calls := 0
+	var calls int
 	processor := func(synthetic.Message) {
 		calls++
 	}
+	tcs := []filtersTC{
+		{
+			message:       synthetic.NewMockMessage("", false),
+			expectedCalls: 1,
+		},
+		{
+			message:       synthetic.NewMockMessage("", true),
+			expectedCalls: 0,
+		},
+	}
 
 	derivedProcessor := NotMentioned(processor)
-	derivedProcessor(synthetic.NewMockMessage("test", true))
-	derivedProcessor(synthetic.NewMockMessage("", false))
+	for _, tc := range tcs {
+		calls = 0
 
-	if calls != 1 {
-		t.Logf("Wrong number of executions %v should be 1", calls)
-		t.Fail()
+		derivedProcessor(tc.message)
+
+		if calls != tc.expectedCalls {
+			t.Logf("Wrong number of executions %v should be %v", calls, tc.expectedCalls)
+			t.Fail()
+		}
 	}
 }
