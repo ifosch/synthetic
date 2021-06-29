@@ -43,6 +43,13 @@ func TestParsing(t *testing.T) {
 			expectedError: "",
 		},
 		{
+			input:         "build  deploy INDEX=\"users ducks\"",
+			command:       "build",
+			expectedJob:   "deploy",
+			expectedArgs:  map[string]string{"INDEX": "\"users ducks\""},
+			expectedError: "",
+		},
+		{
 			input:         "describe",
 			command:       "describe",
 			expectedJob:   "",
@@ -52,27 +59,35 @@ func TestParsing(t *testing.T) {
 		{
 			input:         "describe missingjob",
 			command:       "describe",
-			expectedJob:   "missingjob",
+			expectedJob:   "", // Job does not exist so it returns empty
 			expectedArgs:  map[string]string{},
 			expectedError: "the job `missingjob` doesn't exist in current job list. If it's new addition, try using `reload` to refresh the list of jobs",
 		},
 	}
 
 	for _, test := range tcs {
-		job, args, err := j.ParseArgs(test.input, test.command)
+		t.Run(test.input, func(t *testing.T) {
+			job, args, err := j.ParseArgs(test.input, test.command)
 
-		if err != nil {
-			if test.expectedError == "" {
+			// Unexpected error happened
+			if test.expectedError == "" && err != nil {
 				t.Logf("Unexpected error %v", err)
 				t.Fail()
 			}
-		} else if test.expectedError != "" {
-			t.Logf("Expected error '%v' didn't happened", test.expectedError)
-			t.Fail()
+
+			// Expected error did not happen
+			if test.expectedError != "" && err == nil {
+				t.Logf("Expected error '%v' didn't happen", test.expectedError)
+				t.Fail()
+			}
+
+			// Job parsing did not match.
 			if job != test.expectedJob {
 				t.Logf("Wrong job parsed '%v' should be '%v'", job, test.expectedJob)
 				t.Fail()
 			}
+
+			// Parsed arguments did not match
 			for expectedName, expectedValue := range test.expectedArgs {
 				value, ok := args[expectedName]
 				if !ok {
@@ -84,7 +99,7 @@ func TestParsing(t *testing.T) {
 					t.Fail()
 				}
 			}
-		}
+		})
 	}
 }
 
@@ -239,5 +254,47 @@ func TestBuild(t *testing.T) {
 			t.Logf("Wrong reply '%v' but expected '%v'", reply, tc.expectedRepliesOnBuild[i])
 			t.Fail()
 		}
+	}
+}
+
+func TestTokenizeParams(t *testing.T) {
+	tt := []struct {
+		input  string
+		result []string
+	}{
+		{
+			input:  "",
+			result: []string{},
+		},
+		{
+			input:  "build deploy",
+			result: []string{"build", "deploy"},
+		},
+		{
+			input:  "build  deploy      INDEX=users",
+			result: []string{"build", "deploy", "INDEX=users"},
+		},
+		{
+			input:  "build  deploy      INDEX=\"users\"",
+			result: []string{"build", "deploy", "INDEX=\"users\""},
+		},
+		{
+			input:  "build  deploy      INDEX=\"users ducks\"",
+			result: []string{"build", "deploy", "INDEX=\"users ducks\""},
+		},
+	}
+	for _, tc := range tt {
+		t.Run(tc.input, func(t *testing.T) {
+			result := tokenizeParams(tc.input)
+			if len(result) != len(tc.result) {
+				t.Errorf("expected %d results but got %d", len(tc.result), len(result))
+			}
+
+			for i, value := range result {
+				if value != tc.result[i] {
+					t.Errorf("expected element %d to be %s but was %s", i, tc.result[i], value)
+				}
+			}
+		})
 	}
 }

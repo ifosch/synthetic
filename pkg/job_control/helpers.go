@@ -1,26 +1,32 @@
 package jobcontrol
 
-// InIntSlice returns true if the `elem` integer is present in
-// `slice`.
-func InIntSlice(slice []int, elem int) bool {
-	found := false
-	for _, i := range slice {
-		if i == elem {
-			found = true
-			break
-		}
-	}
-	return found
-}
+import (
+	"strings"
+	"unicode"
+)
 
-// RemoveIndexes removes the elements in `slice` with the indexes in
-// `indexes`.
-func RemoveIndexes(slice []string, indexes []int) []string {
-	newSlice := []string{}
-	for i, s := range slice {
-		if !InIntSlice(indexes, i) {
-			newSlice = append(newSlice, s)
+func tokenizeParams(input string) []string {
+	// Solution taken from
+	// https://groups.google.com/g/golang-nuts/c/pNwqLyfl2co/m/APaZSSvQUAAJ
+	lastQuote := rune(0)
+	// Must return true for symbols that delimit a field
+	f := func(c rune) bool {
+		switch {
+		case c == lastQuote:
+			// when the quotation ends
+			lastQuote = rune(0)
+			return false
+		case lastQuote != rune(0):
+			//when we are inside a quotation
+			return false
+		case unicode.In(c, unicode.Quotation_Mark):
+			// when c is a valid quotation mark symbol starts a quotation
+			lastQuote = c
+			return false
+		default:
+			return unicode.IsSpace(c)
+
 		}
 	}
-	return newSlice
+	return strings.FieldsFunc(input, f)
 }
