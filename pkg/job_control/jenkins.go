@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"regexp"
 	"strings"
 
 	"github.com/ifosch/synthetic/pkg/slack"
@@ -25,22 +24,26 @@ func (j *Jenkins) Init() (err error) {
 
 // ParseArgs provides parameters and options parsing from a message.
 func (j *Jenkins) ParseArgs(input, command string) (job string, args map[string]string, err error) {
-	reduceDupSpaces := regexp.MustCompile(`[ ]{2,}`)
-	params := strings.Split(slack.RemoveWord(reduceDupSpaces.ReplaceAllString(input, " "), command), " ")
-	args = map[string]string{}
-	toRemove := []int{}
-	for i, param := range params {
-		if strings.Contains(param, "=") {
-			data := strings.Split(param, "=")
-			args[data[0]] = data[1]
-			toRemove = append(toRemove, i)
+	args = make(map[string]string)
+
+	var options []string
+	tokens := tokenizeParams(input)
+	for _, token := range tokens {
+		if token != command {
+			if strings.Contains(token, "=") {
+				data := strings.Split(token, "=")
+				args[data[0]] = data[1]
+			} else {
+				options = append(options, token)
+			}
 		}
 	}
-	job = RemoveIndexes(params, toRemove)[0]
 
-	if job == "" {
+	if len(options) == 0 {
 		return "", nil, fmt.Errorf("you must specify, at least, one job. You can use `list` to get a list of defined jobs and `describe <job>` to get all details about a job")
 	}
+
+	job = options[0]
 
 	if j.js.GetJob(job) == nil {
 		return "", nil, fmt.Errorf("the job `%v` doesn't exist in current job list. If it's new addition, try using `reload` to refresh the list of jobs", job)
