@@ -52,27 +52,35 @@ func TestParsing(t *testing.T) {
 		{
 			input:         "describe missingjob",
 			command:       "describe",
-			expectedJob:   "missingjob",
+			expectedJob:   "", // Job does not exist so it returns empty
 			expectedArgs:  map[string]string{},
 			expectedError: "the job `missingjob` doesn't exist in current job list. If it's new addition, try using `reload` to refresh the list of jobs",
 		},
 	}
 
 	for _, test := range tcs {
-		job, args, err := j.ParseArgs(test.input, test.command)
+		t.Run(test.input, func(t *testing.T) {
+			job, args, err := j.ParseArgs(test.input, test.command)
 
-		if err != nil {
-			if test.expectedError == "" {
+			// Unexpected error happened
+			if test.expectedError == "" && err != nil {
 				t.Logf("Unexpected error %v", err)
 				t.Fail()
 			}
-		} else if test.expectedError != "" {
-			t.Logf("Expected error '%v' didn't happened", test.expectedError)
-			t.Fail()
+
+			// Expected error did not happen
+			if test.expectedError != "" && err == nil {
+				t.Logf("Expected error '%v' didn't happen", test.expectedError)
+				t.Fail()
+			}
+
+			// Job parsing did not match.
 			if job != test.expectedJob {
 				t.Logf("Wrong job parsed '%v' should be '%v'", job, test.expectedJob)
 				t.Fail()
 			}
+
+			// Parsed arguments did not match
 			for expectedName, expectedValue := range test.expectedArgs {
 				value, ok := args[expectedName]
 				if !ok {
@@ -84,7 +92,7 @@ func TestParsing(t *testing.T) {
 					t.Fail()
 				}
 			}
-		}
+		})
 	}
 }
 
