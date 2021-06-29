@@ -43,6 +43,13 @@ func TestParsing(t *testing.T) {
 			expectedError: "",
 		},
 		{
+			input:         "build  deploy INDEX=\"users ducks\"",
+			command:       "build",
+			expectedJob:   "deploy",
+			expectedArgs:  map[string]string{"INDEX": "\"users ducks\""},
+			expectedError: "",
+		},
+		{
 			input:         "describe",
 			command:       "describe",
 			expectedJob:   "",
