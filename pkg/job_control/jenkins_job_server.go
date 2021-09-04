@@ -1,6 +1,8 @@
 package jobcontrol
 
 import (
+	"context"
+
 	"github.com/bndr/gojenkins"
 )
 
@@ -13,7 +15,7 @@ type JenkinsJobServer struct {
 // Connect establishes connection to the JenkinsJobServer.
 func (js *JenkinsJobServer) Connect(url, user, password string) error {
 	js.jenkins = gojenkins.CreateJenkins(nil, url, user, password)
-	_, err := js.jenkins.Init()
+	_, err := js.jenkins.Init(context.TODO())
 	if err != nil {
 		return err
 	}
@@ -28,7 +30,7 @@ func (js *JenkinsJobServer) Connect(url, user, password string) error {
 
 // Load queries the job server for all the data.
 func (js *JenkinsJobServer) Load() error {
-	jobs, err := js.jenkins.GetAllJobs()
+	jobs, err := js.jenkins.GetAllJobs(context.TODO())
 	if err != nil {
 		return err
 	}
