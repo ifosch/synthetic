@@ -2,6 +2,7 @@ package jobcontrol
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"strings"
 	"text/template"
@@ -29,12 +30,12 @@ func (j *Job) Description() string {
 
 // Run runs the Job.
 func (j *Job) Run(args map[string]string, out chan Update) {
-	number, err := j.client.BuildJob(j.Name(), args)
+	number, err := j.client.BuildJob(context.TODO(), j.Name(), args)
 	if err != nil {
 		update(out, fmt.Sprintf("Job Invoke error %v", err), "boom", true)
 		return
 	}
-	task, err := j.client.GetQueueItem(number)
+	task, err := j.client.GetQueueItem(context.TODO(), number)
 	if err != nil {
 		update(out, fmt.Sprintf("Task get error %v", err), "boom", true)
 		return
@@ -46,10 +47,10 @@ func (j *Job) Run(args map[string]string, out chan Update) {
 			break
 		}
 		time.Sleep(100 * time.Millisecond)
-		task.Poll()
+		task.Poll(context.TODO())
 		buildID = task.Raw.Executable.Number
 	}
-	build, err := j.client.GetBuild(j.Name(), buildID)
+	build, err := j.client.GetBuild(context.TODO(), j.Name(), buildID)
 	if err != nil {
 		update(out, fmt.Sprintf("Queue item get error %v", err), "boom", true)
 		return
@@ -60,7 +61,7 @@ func (j *Job) Run(args map[string]string, out chan Update) {
 			break
 		}
 		time.Sleep(100 * time.Millisecond)
-		_, err = build.Poll()
+		_, err = build.Poll(context.TODO())
 		if err != nil {
 			update(out, fmt.Sprintf("Error polling build %v", err), "boom", true)
 			return
