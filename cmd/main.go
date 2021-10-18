@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/ifosch/synthetic/pkg/job_control"
+	"github.com/ifosch/synthetic/pkg/k8s"
 	"github.com/ifosch/synthetic/pkg/slack"
 	"github.com/ifosch/synthetic/pkg/synthetic"
 )
@@ -39,6 +40,7 @@ func main() {
 	)
 
 	jobcontrol.Register(client)
+	k8s.Register(client)
 
 	client.Start()
 }
