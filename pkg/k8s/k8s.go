@@ -9,13 +9,17 @@ import (
 	"github.com/ifosch/synthetic/pkg/synthetic"
 )
 
-// GetClusters loads default kubeconfig and gets the list of cluster
-// defined.
-func GetClusters() ([]string, error) {
-	kubeConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
+func getConfig() clientcmd.ClientConfig {
+	return clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
 		clientcmd.NewDefaultClientConfigLoadingRules(),
 		&clientcmd.ConfigOverrides{},
 	)
+}
+
+// GetClusters loads default kubeconfig and gets the list of cluster
+// defined.
+func GetClusters() ([]string, error) {
+	kubeConfig := getConfig()
 
 	clusters := []string{}
 	cfg, err := kubeConfig.RawConfig()
