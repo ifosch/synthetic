@@ -31,26 +31,30 @@ func compareStringLists(a, b []string) error {
 	return nil
 }
 
-func TestListClusters(t *testing.T) {
+func getKubeCfgFixture(filename string) string {
 	curDir, err := os.Getwd()
 	if err != nil {
 		panic(err)
 	}
 
+	return filepath.Join(curDir, fmt.Sprintf("../../tests/fixtures/%s", filename))
+}
+
+func TestListClusters(t *testing.T) {
 	tcs := []struct {
 		kubeconfig     string
 		expectedErrMsg string
 	}{
 		{
-			kubeconfig:     filepath.Join(curDir, "../../tests/fixtures/kubeconfig.yaml"),
+			kubeconfig:     getKubeCfgFixture("kubeconfig.yaml"),
 			expectedErrMsg: "",
 		},
 		{
-			kubeconfig:     filepath.Join(curDir, "../../tests/fixtures/kubeconfig_one_missing.yaml"),
+			kubeconfig:     getKubeCfgFixture("kubeconfig_one_missing.yaml"),
 			expectedErrMsg: "item cluster3.example.com is missing",
 		},
 		{
-			kubeconfig:     filepath.Join(curDir, "../../tests/fixtures/kubeconfig_one_unexpected.yaml"),
+			kubeconfig:     getKubeCfgFixture("kubeconfig_one_unexpected.yaml"),
 			expectedErrMsg: "item unexpected.example.com was not expected",
 		},
 	}
