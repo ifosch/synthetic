@@ -1,8 +1,13 @@
 package k8s
 
 import (
+	"context"
 	"fmt"
+	"strings"
 
+	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 
 	"github.com/ifosch/synthetic/pkg/slack"
@@ -20,6 +25,63 @@ func getConfig(context string) clientcmd.ClientConfig {
 		clientcmd.NewDefaultClientConfigLoadingRules(),
 		configOverrides,
 	)
+}
+
+var getClient = func(cluster string) (kubernetes.Interface, error) {
+	kubeConfig := getConfig(cluster)
+
+	clientConfig, err := kubeConfig.ClientConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	client, err := kubernetes.NewForConfig(clientConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	return client, nil
+}
+
+// GetPods returns a list of pods for the specified `cluster`. If
+// `cluster` is an empty string, then it lists all pods in all
+// clusters known by the bot.
+func GetPods(cluster, namespace string) ([]v1.Pod, error) {
+	client, err := getClient(cluster)
+	if err != nil {
+		return nil, err
+	}
+
+	pods, err := client.CoreV1().Pods(namespace).List(context.Background(), metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	return pods.Items, nil
+}
+
+func listPods(msg synthetic.Message) {
+	command := strings.Split(msg.ClearMention(), " ")
+	cluster := ""
+	namespace := ""
+	if len(command) >= 3 {
+		cluster = command[2]
+		if len(command) == 4 {
+			namespace = command[3]
+		}
+	}
+
+	pods, err := GetPods(cluster, namespace)
+	if err != nil {
+		msg.Reply(err.Error(), msg.Thread())
+		return
+	}
+
+	response := ""
+	for _, pod := range pods {
+		response = fmt.Sprintf("%s- %s\n", response, pod.Name)
+	}
+	msg.Reply(response, msg.Thread())
 }
 
 // GetClusters loads default kubeconfig and gets the list of cluster
@@ -59,4 +121,5 @@ func listClusters(msg synthetic.Message) {
 // Register registers all the kubernetes operations as bot commands.
 func Register(client *slack.Chat) {
 	client.RegisterMessageProcessor(slack.NewMessageProcessor("github.com/ifosch/synthetic/pkg/k8s.listClusters", slack.Exactly(slack.Mentioned(listClusters), "list clusters")))
+	client.RegisterMessageProcessor(slack.NewMessageProcessor("github.com/ifosch/synthetic/pkg/k8s.listPods", slack.Contains(slack.Mentioned(listPods), "list pods")))
 }
