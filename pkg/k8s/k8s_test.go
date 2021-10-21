@@ -1,10 +1,16 @@
 package k8s
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
+
+	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/kubernetes/fake"
 )
 
 func stringIn(item string, items []string) bool {
@@ -38,6 +44,66 @@ func getKubeCfgFixture(filename string) string {
 	}
 
 	return filepath.Join(curDir, fmt.Sprintf("../../tests/fixtures/%s", filename))
+}
+
+func TestGetPods(t *testing.T) {
+	tcs := []struct {
+		namespace string
+		podList   []*v1.Pod
+	}{
+		{
+			namespace: "",
+			podList: []*v1.Pod{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "pod1",
+						Namespace: "default",
+					},
+				},
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "pod2",
+						Namespace: "kube-system",
+					},
+				},
+			},
+		},
+		{
+			namespace: "kube-system",
+			podList: []*v1.Pod{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "pod2",
+						Namespace: "kube-system",
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range tcs {
+		clientSet := fake.NewSimpleClientset()
+		getClient = func(cluster string) (kubernetes.Interface, error) {
+			for _, pod := range test.podList {
+				clientSet.CoreV1().Pods(pod.Namespace).Create(context.Background(), pod, metav1.CreateOptions{})
+			}
+			return clientSet, nil
+		}
+
+		pods, err := GetPods("", test.namespace)
+		if err != nil {
+			panic(err)
+		}
+
+		if len(pods) != len(test.podList) {
+			t.Errorf("Wrong number of pods %d, expected %d", len(pods), len(test.podList))
+		}
+		for i, pod := range pods {
+			if pod.Name != test.podList[i].Name {
+				t.Errorf("Wrong pod name %s, expected %s", pods[0].Name, test.podList[i].Name)
+			}
+		}
+	}
 }
 
 func TestGetConfig(t *testing.T) {
