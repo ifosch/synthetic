@@ -44,8 +44,14 @@ func main() {
 		os.Getenv("JENKINS_USER"),
 		os.Getenv("JENKINS_PASSWORD"),
 	)
+	registerJenkinsCommands(client, jenkins)
 
-	// Jenkins client commands
+	registerK8sCommands(client)
+
+	client.Start()
+}
+
+func registerJenkinsCommands(client *slack.Chat, jenkins *jobcontrol.Jenkins) {
 	client.RegisterMessageProcessor(
 		slack.NewMessageProcessor(
 			"github.com/ifosch/synthetic/pkg/jenkins.List",
@@ -70,8 +76,9 @@ func main() {
 			slack.Mentioned(slack.Contains(jenkins.Reload, "reload")),
 		),
 	)
+}
 
-	// Kubernetes client commands
+func registerK8sCommands(client *slack.Chat) {
 	client.RegisterMessageProcessor(
 		slack.NewMessageProcessor(
 			"github.com/ifosch/synthetic/pkg/k8s.listClusters",
@@ -84,6 +91,4 @@ func main() {
 			slack.Contains(slack.Mentioned(k8s.ListPods), "list pods"),
 		),
 	)
-
-	client.Start()
 }
