@@ -4,7 +4,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/ifosch/synthetic/pkg/job_control"
+	jobcontrol "github.com/ifosch/synthetic/pkg/job_control"
 	"github.com/ifosch/synthetic/pkg/k8s"
 	"github.com/ifosch/synthetic/pkg/slack"
 	"github.com/ifosch/synthetic/pkg/synthetic"
@@ -39,7 +39,38 @@ func main() {
 		),
 	)
 
-	jobcontrol.Register(client)
+	jenkins := jobcontrol.NewJenkins(
+		os.Getenv("JENKINS_URL"),
+		os.Getenv("JENKINS_USER"),
+		os.Getenv("JENKINS_PASSWORD"),
+	)
+
+	// Jenkins client commands
+	client.RegisterMessageProcessor(
+		slack.NewMessageProcessor(
+			"github.com/ifosch/synthetic/pkg/jenkins.List",
+			slack.Exactly(slack.Mentioned(jenkins.List), "list"),
+		),
+	)
+	client.RegisterMessageProcessor(
+		slack.NewMessageProcessor(
+			"github.com/ifosch/synthetic/pkg/jenkins.Describe",
+			slack.Mentioned(slack.Contains(jenkins.Describe, "describe")),
+		),
+	)
+	client.RegisterMessageProcessor(
+		slack.NewMessageProcessor(
+			"github.com/ifosch/synthetic/pkg/jenkins.Build",
+			slack.Mentioned(slack.Contains(jenkins.Build, "build")),
+		),
+	)
+	client.RegisterMessageProcessor(
+		slack.NewMessageProcessor(
+			"github.com/ifosch/synthetic/pkg/jenkins.Reload",
+			slack.Mentioned(slack.Contains(jenkins.Reload, "reload")),
+		),
+	)
+
 	k8s.Register(client)
 
 	client.Start()
