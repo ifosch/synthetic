@@ -71,7 +71,19 @@ func main() {
 		),
 	)
 
-	k8s.Register(client)
+	// Kubernetes client commands
+	client.RegisterMessageProcessor(
+		slack.NewMessageProcessor(
+			"github.com/ifosch/synthetic/pkg/k8s.listClusters",
+			slack.Exactly(slack.Mentioned(k8s.ListClusters), "list clusters"),
+		),
+	)
+	client.RegisterMessageProcessor(
+		slack.NewMessageProcessor(
+			"github.com/ifosch/synthetic/pkg/k8s.listPods",
+			slack.Contains(slack.Mentioned(k8s.ListPods), "list pods"),
+		),
+	)
 
 	client.Start()
 }

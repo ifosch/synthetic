@@ -10,7 +10,6 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 
-	"github.com/ifosch/synthetic/pkg/slack"
 	"github.com/ifosch/synthetic/pkg/synthetic"
 )
 
@@ -60,7 +59,8 @@ func GetPods(cluster, namespace string) ([]v1.Pod, error) {
 	return pods.Items, nil
 }
 
-func listPods(msg synthetic.Message) {
+// ListPods returns a list of pods
+func ListPods(msg synthetic.Message) {
 	command := strings.Split(msg.ClearMention(), " ")
 	cluster := ""
 	namespace := ""
@@ -101,7 +101,9 @@ func GetClusters() ([]string, error) {
 	return clusters, nil
 }
 
-func listClusters(msg synthetic.Message) {
+// ListClusters returns a list of clusters available in the supplied
+// kubeconfig
+func ListClusters(msg synthetic.Message) {
 	clusters, err := GetClusters()
 	if err != nil {
 		msg.Reply(err.Error(), msg.Thread())
@@ -116,10 +118,4 @@ func listClusters(msg synthetic.Message) {
 		response = fmt.Sprintf("%s- %s\n", response, cluster)
 	}
 	msg.Reply(response, msg.Thread())
-}
-
-// Register registers all the kubernetes operations as bot commands.
-func Register(client *slack.Chat) {
-	client.RegisterMessageProcessor(slack.NewMessageProcessor("github.com/ifosch/synthetic/pkg/k8s.listClusters", slack.Exactly(slack.Mentioned(listClusters), "list clusters")))
-	client.RegisterMessageProcessor(slack.NewMessageProcessor("github.com/ifosch/synthetic/pkg/k8s.listPods", slack.Contains(slack.Mentioned(listPods), "list pods")))
 }
