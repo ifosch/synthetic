@@ -2,11 +2,8 @@ package jobcontrol
 
 import (
 	"fmt"
-	"log"
-	"os"
 	"strings"
 
-	"github.com/ifosch/synthetic/pkg/slack"
 	"github.com/ifosch/synthetic/pkg/synthetic"
 )
 
@@ -15,11 +12,12 @@ type Jenkins struct {
 	js IJobServer
 }
 
-// Init connects to Jenkins and gathers the data from it.
-func (j *Jenkins) Init() (err error) {
+// NewJenkins returns a pointer to an initialized Jenkins instance
+func NewJenkins(url, user, password string) *Jenkins {
+	j := &Jenkins{}
 	j.js = &JenkinsJobServer{}
-	j.js.Connect(os.Getenv("JENKINS_URL"), os.Getenv("JENKINS_USER"), os.Getenv("JENKINS_PASSWORD"))
-	return
+	j.js.Connect(url, user, password)
+	return j
 }
 
 // ParseArgs provides parameters and options parsing from a message.
@@ -109,19 +107,4 @@ func (j *Jenkins) Build(msg synthetic.Message) {
 			break
 		}
 	}
-}
-
-// Register loads and initializes the Jenkins object and registers the
-// corresponding message processors with `chat`.
-func Register(client *slack.Chat) {
-	j := Jenkins{}
-	err := j.Init()
-	if err != nil {
-		log.Fatalf("Error: %v", err)
-	}
-
-	client.RegisterMessageProcessor(slack.NewMessageProcessor("github.com/ifosch/synthetic/pkg/jenkins.List", slack.Exactly(slack.Mentioned(j.List), "list")))
-	client.RegisterMessageProcessor(slack.NewMessageProcessor("github.com/ifosch/synthetic/pkg/jenkins.Describe", slack.Mentioned(slack.Contains(j.Describe, "describe"))))
-	client.RegisterMessageProcessor(slack.NewMessageProcessor("github.com/ifosch/synthetic/pkg/jenkins.Build", slack.Mentioned(slack.Contains(j.Build, "build"))))
-	client.RegisterMessageProcessor(slack.NewMessageProcessor("github.com/ifosch/synthetic/pkg/jenkins.Reload", slack.Mentioned(slack.Contains(j.Reload, "reload"))))
 }
