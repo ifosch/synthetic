@@ -9,15 +9,22 @@ import (
 
 // Jenkins is the object to handle the Jenkins connection.
 type Jenkins struct {
-	js IJobServer
+	url, user, password string
+	js                  IJobServer
 }
 
 // NewJenkins returns a pointer to an initialized Jenkins instance
 func NewJenkins(url, user, password string) *Jenkins {
-	j := &Jenkins{}
+	j := &Jenkins{url: url, user: user, password: password}
 	j.js = &JenkinsJobServer{}
-	j.js.Connect(url, user, password)
 	return j
+}
+
+// Connect to the jenkins server with the credentials used during
+// initialization
+func (j *Jenkins) Connect() error {
+	j.js.Connect(j.url, j.user, j.password)
+	return nil
 }
 
 // ParseArgs provides parameters and options parsing from a message.
