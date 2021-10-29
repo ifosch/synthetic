@@ -3,7 +3,6 @@ package slack
 import (
 	"fmt"
 	"log"
-	"os"
 	"strings"
 
 	"github.com/slack-go/slack"
@@ -17,7 +16,13 @@ func LogMessage(msg synthetic.Message) {
 	if msg.Thread() {
 		thread = "a thread in "
 	}
-	log.Printf("Message: '%v' from '%v' in %v'%v'\n", msg.Text(), msg.User().Name(), thread, msg.Conversation().Name())
+	log.Printf(
+		"Message: '%v' from '%v' in %v'%v'\n",
+		msg.Text(),
+		msg.User().Name(),
+		thread,
+		msg.Conversation().Name(),
+	)
 }
 
 // Chat represents the whole chat connection providing methods to
@@ -31,27 +36,17 @@ type Chat struct {
 }
 
 // NewChat is the constructor for the Chat object.
-func NewChat(token string, defaultReplyInThread bool, debug bool) (chat *Chat) {
-	api := slack.New(
-		token,
-		slack.OptionDebug(debug),
-		slack.OptionLog(log.New(os.Stdout, "slack-bot: ", log.Lshortfile|log.LstdFlags)),
-	)
+func NewChat(api IClient, defaultReplyInThread bool, botID string) *Chat {
 	processors := map[string][]IMessageProcessor{
 		"message": {},
 	}
-	chat = &Chat{
+	return &Chat{
 		api:                  api,
-		rtm:                  nil,
+		rtm:                  api.NewRTM(),
 		defaultReplyInThread: defaultReplyInThread,
 		processors:           processors,
-		botID:                "",
+		botID:                botID,
 	}
-	chat.rtm = chat.api.NewRTM()
-	chat.RegisterMessageProcessor(
-		NewMessageProcessor("github.com/ifosch/pkg/slack.LogMessage", LogMessage),
-	)
-	return
 }
 
 // IncomingEvents returns the channel to the chat system events.

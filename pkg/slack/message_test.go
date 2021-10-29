@@ -125,14 +125,7 @@ func TestReply(t *testing.T) {
 
 func TestReactUnreact(t *testing.T) {
 	client := NewMockClient()
-	rtm := NewMockRTM()
-	chat := &Chat{
-		api:                  client,
-		rtm:                  rtm,
-		defaultReplyInThread: false,
-		processors:           map[string][]IMessageProcessor{},
-		botID:                "me",
-	}
+	chat := NewChat(client, false, "me")
 	messageEvents := messageEvents()
 
 	for _, messageEvent := range messageEvents {
