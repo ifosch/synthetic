@@ -2,7 +2,6 @@ package slack
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/ifosch/synthetic/pkg/synthetic"
 	"github.com/slack-go/slack"
@@ -44,45 +43,6 @@ func (m *Message) Conversation() synthetic.Conversation {
 // Text is an accessor for text.
 func (m *Message) Text() string {
 	return m.text
-}
-
-// ReadMessage generates the `Message` from a message event.
-func ReadMessage(event *slack.MessageEvent, chat *Chat) (msg *Message, err error) {
-	thread := false
-	if event.ClientMsgID == "" {
-		return &Message{
-			event:        event,
-			chat:         chat,
-			Completed:    false,
-			thread:       thread,
-			mention:      false,
-			user:         nil,
-			conversation: nil,
-			text:         "",
-		}, nil
-	}
-	if event.ThreadTimestamp != "" {
-		thread = true
-	}
-	user, err := NewUserFromID(event.User, chat.api)
-	if err != nil {
-		return nil, err
-	}
-	conversation, err := NewConversationFromID(event.Channel, chat.api)
-	if err != nil {
-		return nil, err
-	}
-
-	return &Message{
-		event:        event,
-		chat:         chat,
-		Completed:    true,
-		thread:       thread,
-		mention:      strings.Contains(event.Text, fmt.Sprintf("<@%v>", chat.botID)),
-		user:         user,
-		conversation: conversation,
-		text:         ReplaceSpace(event.Text),
-	}, nil
 }
 
 // Reply send the `msg` string as a reply to the message, in a thread
