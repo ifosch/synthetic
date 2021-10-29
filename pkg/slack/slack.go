@@ -64,6 +64,14 @@ func (c *Chat) Start() {
 	}
 }
 
+// Dispatch routes the message to the appropriate command
+func (c *Chat) Dispatch(msg *Message) {
+	for _, processor := range c.processors["message"] {
+		log.Printf("Invoking processor %v", processor.Name())
+		go processor.Run(msg)
+	}
+}
+
 // Process runs the message processing for the chat system.
 func (c *Chat) Process(msg slack.RTMEvent) {
 	switch ev := msg.Data.(type) {
@@ -74,10 +82,7 @@ func (c *Chat) Process(msg slack.RTMEvent) {
 			return
 		}
 		if msg.Completed {
-			for _, processor := range c.processors["message"] {
-				log.Printf("Invoking processor %v", processor.Name())
-				go processor.Run(msg)
-			}
+			c.Dispatch(msg)
 		}
 	case *slack.ConnectingEvent:
 		log.Printf("Trying to connect to Slack: Attempt %v of %v", ev.Attempt, ev.ConnectionCount)
