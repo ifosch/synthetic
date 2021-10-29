@@ -147,6 +147,11 @@ func (c *Chat) ReadMessage(event *slack.MessageEvent) (*Message, error) {
 		return nil, err
 	}
 
+	text := event.Text
+	if strings.Contains(text, fmt.Sprintf("<@%v>", c.botID)) {
+		text = RemoveWord(text, fmt.Sprintf("<@%v>", c.botID))
+	}
+
 	return &Message{
 		event:        event,
 		chat:         c,
@@ -155,6 +160,6 @@ func (c *Chat) ReadMessage(event *slack.MessageEvent) (*Message, error) {
 		mention:      strings.Contains(event.Text, fmt.Sprintf("<@%v>", c.botID)),
 		user:         user,
 		conversation: conversation,
-		text:         ReplaceSpace(event.Text),
+		text:         CleanText(text),
 	}, nil
 }
