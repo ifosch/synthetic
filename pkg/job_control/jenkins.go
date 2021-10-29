@@ -73,7 +73,7 @@ func (j *Jenkins) Reload(msg synthetic.Message) {
 
 // Describe replies `msg` with the description of a job defined.
 func (j *Jenkins) Describe(msg synthetic.Message) {
-	job, _, err := j.ParseArgs(msg.ClearMention(), "describe")
+	job, _, err := j.ParseArgs(msg.Text(), "describe")
 	if err != nil {
 		msg.Reply(fmt.Sprintf("%s", err), msg.Thread())
 		return
@@ -90,7 +90,7 @@ func (j *Jenkins) List(msg synthetic.Message) {
 // the job processing updates from Jenkins and reacts and replies with
 // these to `msg`.
 func (j *Jenkins) Build(msg synthetic.Message) {
-	job, args, err := j.ParseArgs(msg.ClearMention(), "build")
+	job, args, err := j.ParseArgs(msg.Text(), "build")
 	if err != nil {
 		msg.Reply(fmt.Sprintf("%s", err), msg.Thread())
 		return

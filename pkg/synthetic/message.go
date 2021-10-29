@@ -5,7 +5,6 @@ type Message interface {
 	Reply(msg string, inThread bool)
 	React(reaction string)
 	Unreact(reaction string)
-	ClearMention() string
 	Thread() bool
 	Mention() bool
 	Text() string
