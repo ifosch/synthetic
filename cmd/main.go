@@ -4,9 +4,11 @@ import (
 	"log"
 	"os"
 
+	"github.com/slack-go/slack"
+
 	jobcontrol "github.com/ifosch/synthetic/pkg/job_control"
 	"github.com/ifosch/synthetic/pkg/k8s"
-	"github.com/ifosch/synthetic/pkg/slack"
+	myslack "github.com/ifosch/synthetic/pkg/slack"
 	"github.com/ifosch/synthetic/pkg/synthetic"
 )
 
@@ -25,18 +27,16 @@ func main() {
 	}
 	debug := false
 
-	client := slack.NewChat(slackToken, true, debug)
-	client.RegisterMessageProcessor(
-		slack.NewMessageProcessor(
-			"github.com/ifosch/synthetic/main.replyHello",
-			slack.Mentioned(slack.Contains(replyHello, "hello")),
-		),
+	// Initialize dependencies
+	api := slack.New(
+		slackToken,
+		slack.OptionDebug(debug),
+		slack.OptionLog(log.New(os.Stdout, "slack-bot: ", log.Lshortfile|log.LstdFlags)),
 	)
-	client.RegisterMessageProcessor(
-		slack.NewMessageProcessor(
-			"github.com/ifosch/synthetic/main.reactHello",
-			slack.NotMentioned(slack.Contains(reactHello, "hello")),
-		),
+	chat := myslack.NewChat(
+		api,
+		true,
+		"",
 	)
 
 	jenkins := jobcontrol.NewJenkins(
@@ -47,51 +47,74 @@ func main() {
 	if err := jenkins.Connect(); err != nil {
 		log.Fatalf("error connecting to jenkins: %s", err.Error())
 	}
-	registerJenkinsCommands(client, jenkins)
 
-	registerK8sCommands(client)
+	registerChatCommands(chat)
+	registerJenkinsCommands(chat, jenkins)
+	registerK8sCommands(chat)
 
-	client.Start()
+	chat.Start()
 }
 
-func registerJenkinsCommands(client *slack.Chat, jenkins *jobcontrol.Jenkins) {
-	client.RegisterMessageProcessor(
-		slack.NewMessageProcessor(
+func registerChatCommands(chat *myslack.Chat) {
+	chat.RegisterMessageProcessor(
+		myslack.NewMessageProcessor(
+			"github.com/ifosch/pkg/slack.LogMessage",
+			myslack.LogMessage,
+		),
+	)
+
+	chat.RegisterMessageProcessor(
+		myslack.NewMessageProcessor(
+			"github.com/ifosch/synthetic/main.replyHello",
+			myslack.Mentioned(myslack.Contains(replyHello, "hello")),
+		),
+	)
+	chat.RegisterMessageProcessor(
+		myslack.NewMessageProcessor(
+			"github.com/ifosch/synthetic/main.reactHello",
+			myslack.NotMentioned(myslack.Contains(reactHello, "hello")),
+		),
+	)
+}
+
+func registerJenkinsCommands(chat *myslack.Chat, jenkins *jobcontrol.Jenkins) {
+	chat.RegisterMessageProcessor(
+		myslack.NewMessageProcessor(
 			"github.com/ifosch/synthetic/pkg/jenkins.List",
-			slack.Exactly(slack.Mentioned(jenkins.List), "list"),
+			myslack.Exactly(myslack.Mentioned(jenkins.List), "list"),
 		),
 	)
-	client.RegisterMessageProcessor(
-		slack.NewMessageProcessor(
+	chat.RegisterMessageProcessor(
+		myslack.NewMessageProcessor(
 			"github.com/ifosch/synthetic/pkg/jenkins.Describe",
-			slack.Mentioned(slack.Contains(jenkins.Describe, "describe")),
+			myslack.Mentioned(myslack.Contains(jenkins.Describe, "describe")),
 		),
 	)
-	client.RegisterMessageProcessor(
-		slack.NewMessageProcessor(
+	chat.RegisterMessageProcessor(
+		myslack.NewMessageProcessor(
 			"github.com/ifosch/synthetic/pkg/jenkins.Build",
-			slack.Mentioned(slack.Contains(jenkins.Build, "build")),
+			myslack.Mentioned(myslack.Contains(jenkins.Build, "build")),
 		),
 	)
-	client.RegisterMessageProcessor(
-		slack.NewMessageProcessor(
+	chat.RegisterMessageProcessor(
+		myslack.NewMessageProcessor(
 			"github.com/ifosch/synthetic/pkg/jenkins.Reload",
-			slack.Mentioned(slack.Contains(jenkins.Reload, "reload")),
+			myslack.Mentioned(myslack.Contains(jenkins.Reload, "reload")),
 		),
 	)
 }
 
-func registerK8sCommands(client *slack.Chat) {
-	client.RegisterMessageProcessor(
-		slack.NewMessageProcessor(
+func registerK8sCommands(chat *myslack.Chat) {
+	chat.RegisterMessageProcessor(
+		myslack.NewMessageProcessor(
 			"github.com/ifosch/synthetic/pkg/k8s.listClusters",
-			slack.Exactly(slack.Mentioned(k8s.ListClusters), "list clusters"),
+			myslack.Exactly(myslack.Mentioned(k8s.ListClusters), "list clusters"),
 		),
 	)
-	client.RegisterMessageProcessor(
-		slack.NewMessageProcessor(
+	chat.RegisterMessageProcessor(
+		myslack.NewMessageProcessor(
 			"github.com/ifosch/synthetic/pkg/k8s.listPods",
-			slack.Contains(slack.Mentioned(k8s.ListPods), "list pods"),
+			myslack.Contains(myslack.Mentioned(k8s.ListPods), "list pods"),
 		),
 	)
 }
