@@ -5,7 +5,7 @@ import (
 )
 
 // ReplaceSpace ...
-func ReplaceSpace(s string) string {
+func replaceSpace(s string) string {
 	var result []rune
 	const badSpace = '\u00A0'
 	for _, r := range s {
@@ -18,15 +18,15 @@ func ReplaceSpace(s string) string {
 	return string(result)
 }
 
-func CleanText(s string) string {
-	s = ReplaceSpace(s)
+func cleanText(s string) string {
+	s = replaceSpace(s)
 	s = strings.TrimSpace(s)
 	return s
 }
 
 // RemoveWord removes `word` from `text` and returns the result. Note
 // this uses a single space to split the words in `text`.
-func RemoveWord(text string, word string) string {
+func removeWord(text string, word string) string {
 	slice := strings.Split(text, " ")
 	i := -1
 	for k, v := range slice {
