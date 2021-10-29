@@ -49,11 +49,6 @@ func NewChat(api IClient, defaultReplyInThread bool, botID string) *Chat {
 	}
 }
 
-// IncomingEvents returns the channel to the chat system events.
-func (c *Chat) IncomingEvents() chan slack.RTMEvent {
-	return c.rtm.(*slack.RTM).IncomingEvents
-}
-
 // RegisterMessageProcessor allows to add more message processors.
 func (c *Chat) RegisterMessageProcessor(processor IMessageProcessor) {
 	c.processors["message"] = append(c.processors["message"], processor)
@@ -64,7 +59,7 @@ func (c *Chat) RegisterMessageProcessor(processor IMessageProcessor) {
 func (c *Chat) Start() {
 	go c.rtm.ManageConnection()
 
-	for msg := range c.IncomingEvents() {
+	for msg := range c.rtm.(*slack.RTM).IncomingEvents {
 		c.Process(msg)
 	}
 }
