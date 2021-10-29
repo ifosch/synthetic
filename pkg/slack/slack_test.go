@@ -152,14 +152,16 @@ func TestReadMessage(t *testing.T) {
 	}
 
 	for testID, data := range tc {
-		message, err := chat.ReadMessage(data.event)
-		if err != nil {
-			t.Logf("ReadMessage errored for %v: %v", testID, err)
-			t.Fail()
-		}
-		if !sameMessages(message, data.expected) {
-			t.Logf("\nMessage in %v test was  %v, \nbut expected %v", testID, message, data.expected)
-			t.Fail()
-		}
+		t.Run(testID, func(t *testing.T) {
+			message, err := chat.ReadMessage(data.event)
+			if err != nil {
+				t.Logf("ReadMessage errored for %v: %v", testID, err)
+				t.Fail()
+			}
+			if !sameMessages(message, data.expected) {
+				t.Logf("\nMessage in %v test was  %v, \nbut expected %v", testID, message, data.expected)
+				t.Fail()
+			}
+		})
 	}
 }
