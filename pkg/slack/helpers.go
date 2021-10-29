@@ -18,6 +18,12 @@ func ReplaceSpace(s string) string {
 	return string(result)
 }
 
+func CleanText(s string) string {
+	s = ReplaceSpace(s)
+	s = strings.TrimSpace(s)
+	return s
+}
+
 // RemoveWord removes `word` from `text` and returns the result. Note
 // this uses a single space to split the words in `text`.
 func RemoveWord(text string, word string) string {
