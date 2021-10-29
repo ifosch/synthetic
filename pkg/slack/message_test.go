@@ -76,78 +76,6 @@ func messageEvents() []*slack.MessageEvent {
 	}
 }
 
-func TestReadMessage(t *testing.T) {
-	client := NewMockClient()
-	chat := &Chat{
-		api:                  client,
-		rtm:                  nil,
-		defaultReplyInThread: false,
-		processors:           map[string][]IMessageProcessor{},
-		botID:                "me",
-	}
-	user, _ := NewUserFromID("U000001", client)
-	conversation, _ := NewConversationFromID("CH00001", client)
-	messageEvents := messageEvents()
-	tc := map[string]*EventMessageCase{
-		"Incomplete message": {
-			event: messageEvents[0],
-			expected: &Message{
-				Completed:    false,
-				thread:       false,
-				mention:      false,
-				user:         nil,
-				conversation: nil,
-				text:         "",
-			},
-		},
-		"Threaded message": {
-			event: messageEvents[1],
-			expected: &Message{
-				Completed:    true,
-				thread:       true,
-				mention:      false,
-				user:         user,
-				conversation: conversation,
-				text:         "",
-			},
-		},
-		"Non-threaded message": {
-			event: messageEvents[2],
-			expected: &Message{
-				Completed:    true,
-				thread:       false,
-				mention:      false,
-				user:         user,
-				conversation: conversation,
-				text:         "",
-			},
-		},
-		"Message with mention": {
-			event: messageEvents[3],
-			expected: &Message{
-				Completed:    true,
-				thread:       false,
-				mention:      true,
-				user:         user,
-				conversation: conversation,
-				text:         "<@me>",
-			},
-		},
-	}
-
-	for testID, data := range tc {
-		message, err := ReadMessage(data.event, chat)
-		if err != nil {
-			t.Logf("ReadMessage errored for %v: %v", testID, err)
-			t.Fail()
-		}
-		if !sameMessages(message, data.expected) {
-			t.Logf("\nMessage in %v test was  %v, \nbut expected %v", testID, message, data.expected)
-			t.Fail()
-		}
-	}
-}
-
 func TestReply(t *testing.T) {
 	client := NewMockClient()
 	rtm := NewMockRTM()
@@ -161,7 +89,7 @@ func TestReply(t *testing.T) {
 	messageEvents := messageEvents()
 
 	for _, messageEvent := range messageEvents {
-		message, err := ReadMessage(messageEvent, chat)
+		message, err := chat.ReadMessage(messageEvent)
 		if err != nil {
 			t.Logf("ReadMessage errored: %v", err)
 			t.Fail()
@@ -208,7 +136,7 @@ func TestReactUnreact(t *testing.T) {
 	messageEvents := messageEvents()
 
 	for _, messageEvent := range messageEvents {
-		message, err := ReadMessage(messageEvent, chat)
+		message, err := chat.ReadMessage(messageEvent)
 		if err != nil {
 			t.Logf("ReadMessage errored: %v", err)
 			t.Fail()

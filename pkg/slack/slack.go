@@ -1,8 +1,10 @@
 package slack
 
 import (
+	"fmt"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/ifosch/synthetic/pkg/synthetic"
 	"github.com/slack-go/slack"
@@ -72,7 +74,7 @@ func (c *Chat) Start() {
 }
 
 func processMessage(ev *slack.MessageEvent, c *Chat) {
-	msg, err := ReadMessage(ev, c)
+	msg, err := c.ReadMessage(ev)
 	if err != nil {
 		log.Printf("Error %v processing message %v", err, ev)
 		return
@@ -116,4 +118,43 @@ func (c *Chat) Process(msg slack.RTMEvent) {
 	default:
 		log.Printf("Unmanaged event (%T)", ev)
 	}
+}
+
+// ReadMessage generates the `Message` from a message event.
+func (c *Chat) ReadMessage(event *slack.MessageEvent) (*Message, error) {
+	thread := false
+	if event.ClientMsgID == "" {
+		return &Message{
+			event:        event,
+			chat:         c,
+			Completed:    false,
+			thread:       thread,
+			mention:      false,
+			user:         nil,
+			conversation: nil,
+			text:         "",
+		}, nil
+	}
+	if event.ThreadTimestamp != "" {
+		thread = true
+	}
+	user, err := NewUserFromID(event.User, c.api)
+	if err != nil {
+		return nil, err
+	}
+	conversation, err := NewConversationFromID(event.Channel, c.api)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Message{
+		event:        event,
+		chat:         c,
+		Completed:    true,
+		thread:       thread,
+		mention:      strings.Contains(event.Text, fmt.Sprintf("<@%v>", c.botID)),
+		user:         user,
+		conversation: conversation,
+		text:         ReplaceSpace(event.Text),
+	}, nil
 }
