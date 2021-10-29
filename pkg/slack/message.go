@@ -1,8 +1,6 @@
 package slack
 
 import (
-	"fmt"
-
 	"github.com/ifosch/synthetic/pkg/synthetic"
 	"github.com/slack-go/slack"
 )
@@ -67,12 +65,4 @@ func (m *Message) React(reaction string) {
 // Unreact removes the `reaction` reaction from the message.
 func (m *Message) Unreact(reaction string) {
 	m.chat.api.RemoveReaction(reaction, slack.ItemRef{Channel: m.event.Channel, Timestamp: m.event.Timestamp})
-}
-
-// ClearMention returns the message text without the bot's username.
-func (m *Message) ClearMention() string {
-	if !m.mention {
-		return m.text
-	}
-	return RemoveWord(m.text, fmt.Sprintf("<@%v>", m.chat.botID))
 }

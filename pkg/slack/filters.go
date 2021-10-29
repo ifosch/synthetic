@@ -10,7 +10,7 @@ import (
 // message is exactly like the `catch` string.
 func Exactly(processor func(synthetic.Message), catch string) func(synthetic.Message) {
 	return func(msg synthetic.Message) {
-		if msg.ClearMention() == catch {
+		if msg.Text() == catch {
 			processor(msg)
 		}
 	}

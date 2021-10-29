@@ -61,7 +61,7 @@ func GetPods(cluster, namespace string) ([]v1.Pod, error) {
 
 // ListPods returns a list of pods
 func ListPods(msg synthetic.Message) {
-	command := strings.Split(msg.ClearMention(), " ")
+	command := strings.Split(msg.Text(), " ")
 	cluster := ""
 	namespace := ""
 	if len(command) >= 3 {
