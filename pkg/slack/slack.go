@@ -6,8 +6,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/ifosch/synthetic/pkg/synthetic"
 	"github.com/slack-go/slack"
+
+	"github.com/ifosch/synthetic/pkg/synthetic"
 )
 
 // LogMessage is a message processor to log the message received.

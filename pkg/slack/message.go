@@ -1,8 +1,9 @@
 package slack
 
 import (
-	"github.com/ifosch/synthetic/pkg/synthetic"
 	"github.com/slack-go/slack"
+
+	"github.com/ifosch/synthetic/pkg/synthetic"
 )
 
 // Message contains all the information about a message the bot was
