@@ -14,9 +14,9 @@ type Jenkins struct {
 }
 
 // NewJenkins returns a pointer to an initialized Jenkins instance
-func NewJenkins(url, user, password string) *Jenkins {
+func NewJenkins(url, user, password string, jobServer IJobServer) *Jenkins {
 	j := &Jenkins{url: url, user: user, password: password}
-	j.js = &JenkinsJobServer{}
+	j.js = jobServer
 	return j
 }
 
