@@ -13,14 +13,16 @@ func TestNewConversationFromID(t *testing.T) {
 
 	client := NewMockClient()
 	for testID, data := range tc {
-		conversation, err := NewConversationFromID(data[0], client)
-		if err != nil {
-			t.Logf("NewConversationFromID errored for %v: %v", testID, err)
-			t.Fail()
-		}
-		if conversation.name != data[1] {
-			t.Logf("Conversation name was %v, instead of expected %v", conversation.name, data[1])
-			t.Fail()
-		}
+		t.Run(testID, func(t *testing.T) {
+			conversation, err := NewConversationFromID(data[0], client)
+			if err != nil {
+				t.Logf("NewConversationFromID errored for %v: %v", testID, err)
+				t.Fail()
+			}
+			if conversation.name != data[1] {
+				t.Logf("Conversation name was %v, instead of expected %v", conversation.name, data[1])
+				t.Fail()
+			}
+		})
 	}
 }
