@@ -17,7 +17,6 @@ func disableLogs() {
 }
 
 type parsingTC struct {
-	input         string
 	command       string
 	expectedJob   string
 	expectedArgs  map[string]string
@@ -34,30 +33,26 @@ func TestParsing(t *testing.T) {
 		),
 	}
 
-	tcs := []parsingTC{
-		{
-			input:         "build  deploy      INDEX=users",
+	tcs := map[string]parsingTC{
+		"build  deploy      INDEX=users": {
 			command:       "build",
 			expectedJob:   "deploy",
 			expectedArgs:  map[string]string{"INDEX": "users"},
 			expectedError: "",
 		},
-		{
-			input:         "build  deploy INDEX=\"users ducks\"",
+		"build  deploy INDEX=\"users ducks\"": {
 			command:       "build",
 			expectedJob:   "deploy",
 			expectedArgs:  map[string]string{"INDEX": "\"users ducks\""},
 			expectedError: "",
 		},
-		{
-			input:         "describe",
+		"describe": {
 			command:       "describe",
 			expectedJob:   "",
 			expectedArgs:  map[string]string{},
 			expectedError: "you must specify, at least, one job. You can use `list` to get a list of defined jobs and `describe <job>` to get all details about a job",
 		},
-		{
-			input:         "describe missingjob",
+		"describe missingjob": {
 			command:       "describe",
 			expectedJob:   "", // Job does not exist so it returns empty
 			expectedArgs:  map[string]string{},
@@ -65,9 +60,9 @@ func TestParsing(t *testing.T) {
 		},
 	}
 
-	for _, test := range tcs {
-		t.Run(test.input, func(t *testing.T) {
-			job, args, err := j.ParseArgs(test.input, test.command)
+	for testID, test := range tcs {
+		t.Run(testID, func(t *testing.T) {
+			job, args, err := j.ParseArgs(testID, test.command)
 
 			// Unexpected error happened
 			if test.expectedError == "" && err != nil {
@@ -241,34 +236,28 @@ func TestBuild(t *testing.T) {
 }
 
 func TestTokenizeParams(t *testing.T) {
-	tt := []struct {
-		input  string
+	tt := map[string]struct {
 		result []string
 	}{
-		{
-			input:  "",
+		"": {
 			result: []string{},
 		},
-		{
-			input:  "build deploy",
+		"build deploy": {
 			result: []string{"build", "deploy"},
 		},
-		{
-			input:  "build  deploy      INDEX=users",
+		"build  deploy      INDEX=users": {
 			result: []string{"build", "deploy", "INDEX=users"},
 		},
-		{
-			input:  "build  deploy      INDEX=\"users\"",
+		"build  deploy      INDEX=\"users\"": {
 			result: []string{"build", "deploy", "INDEX=\"users\""},
 		},
-		{
-			input:  "build  deploy      INDEX=\"users ducks\"",
+		"build  deploy      INDEX=\"users ducks\"": {
 			result: []string{"build", "deploy", "INDEX=\"users ducks\""},
 		},
 	}
-	for _, tc := range tt {
-		t.Run(tc.input, func(t *testing.T) {
-			result := tokenizeParams(tc.input)
+	for testID, tc := range tt {
+		t.Run(testID, func(t *testing.T) {
+			result := tokenizeParams(testID)
 			if len(result) != len(tc.result) {
 				t.Errorf("expected %d results but got %d", len(tc.result), len(result))
 			}
