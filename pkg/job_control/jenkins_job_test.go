@@ -8,7 +8,6 @@ import (
 )
 
 type jenkinsJobTC struct {
-	input       string
 	name        string
 	description string
 	params      []struct {
@@ -72,9 +71,8 @@ func (tc jenkinsJobTC) getJenkinsJob() *gojenkins.Job {
 }
 
 func TestJob(t *testing.T) {
-	tcs := []jenkinsJobTC{
-		{
-			input:       "Simple job without params",
+	tcs := map[string]jenkinsJobTC{
+		"Simple job without params": {
 			name:        "myjob",
 			description: "myjob does something",
 			params: []struct {
@@ -84,8 +82,7 @@ func TestJob(t *testing.T) {
 				DefaultValue string
 			}{},
 		},
-		{
-			input:       "Simple job with one param",
+		"Simple job with one param": {
 			name:        "myjob",
 			description: "myjob does something",
 			params: []struct {
@@ -104,8 +101,8 @@ func TestJob(t *testing.T) {
 		},
 	}
 
-	for _, tc := range tcs {
-		t.Run(tc.input, func(t *testing.T) {
+	for testID, tc := range tcs {
+		t.Run(testID, func(t *testing.T) {
 			j := &Job{
 				jenkinsJob: tc.getJenkinsJob(),
 			}
