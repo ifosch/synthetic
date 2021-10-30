@@ -32,15 +32,12 @@ func TestJob(t *testing.T) {
 	describe := j.Describe()
 
 	if name != tc.job.Raw.Name {
-		t.Logf("Wrong job name '%v' should be '%v'", name, tc.job.Raw.Name)
-		t.Fail()
+		t.Errorf("Wrong job name '%v' should be '%v'", name, tc.job.Raw.Name)
 	}
 	if description != tc.job.Raw.Description {
-		t.Logf("Wrong job description '%v' should be '%v'", description, tc.job.Raw.Description)
-		t.Fail()
+		t.Errorf("Wrong job description '%v' should be '%v'", description, tc.job.Raw.Description)
 	}
 	if describe != tc.expectedDescribe {
-		t.Logf("Wrong job describe '%v' should be '%v'", describe, tc.expectedDescribe)
-		t.Fail()
+		t.Errorf("Wrong job describe '%v' should be '%v'", describe, tc.expectedDescribe)
 	}
 }

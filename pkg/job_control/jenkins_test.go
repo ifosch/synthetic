@@ -71,32 +71,27 @@ func TestParsing(t *testing.T) {
 
 			// Unexpected error happened
 			if test.expectedError == "" && err != nil {
-				t.Logf("Unexpected error %v", err)
-				t.Fail()
+				t.Errorf("Unexpected error %v", err)
 			}
 
 			// Expected error did not happen
 			if test.expectedError != "" && err == nil {
-				t.Logf("Expected error '%v' didn't happen", test.expectedError)
-				t.Fail()
+				t.Errorf("Expected error '%v' didn't happen", test.expectedError)
 			}
 
 			// Job parsing did not match.
 			if job != test.expectedJob {
-				t.Logf("Wrong job parsed '%v' should be '%v'", job, test.expectedJob)
-				t.Fail()
+				t.Errorf("Wrong job parsed '%v' should be '%v'", job, test.expectedJob)
 			}
 
 			// Parsed arguments did not match
 			for expectedName, expectedValue := range test.expectedArgs {
 				value, ok := args[expectedName]
 				if !ok {
-					t.Logf("Missing argument '%v'", expectedName)
-					t.Fail()
+					t.Errorf("Missing argument '%v'", expectedName)
 				}
 				if value != expectedValue {
-					t.Logf("Wrong value '%v' for '%v' should be '%v'", value, expectedName, expectedValue)
-					t.Fail()
+					t.Errorf("Wrong value '%v' for '%v' should be '%v'", value, expectedName, expectedValue)
 				}
 			}
 		})
@@ -126,14 +121,12 @@ func TestLoadReload(t *testing.T) {
 	}
 
 	if j.js.GetJobs().Len() != len(tc.expectedJobs) {
-		t.Logf("Wrong number of jobs loaded %v but expected %v", j.js.GetJobs().Len(), len(tc.expectedJobs))
-		t.Fail()
+		t.Errorf("Wrong number of jobs loaded %v but expected %v", j.js.GetJobs().Len(), len(tc.expectedJobs))
 	}
 	i := 0
 	for job := range tc.expectedJobs {
 		if j.js.GetJob(job).Describe() != tc.expectedJobs[job] {
-			t.Logf("Wrong job loaded %v expected %v", j.js.GetJob(job), tc.expectedJobs[job])
-			t.Fail()
+			t.Errorf("Wrong job loaded %v expected %v", j.js.GetJob(job), tc.expectedJobs[job])
 		}
 		i++
 	}
@@ -143,24 +136,20 @@ func TestLoadReload(t *testing.T) {
 	j.Reload(msg)
 
 	if j.js.GetJobs().Len() != len(tc.expectedJobs) {
-		t.Logf("Wrong number of jobs loaded %v but expected %v", j.js.GetJobs().Len(), len(tc.expectedJobs))
-		t.Fail()
+		t.Errorf("Wrong number of jobs loaded %v but expected %v", j.js.GetJobs().Len(), len(tc.expectedJobs))
 	}
 	i = 0
 	for job := range tc.expectedJobs {
 		if j.js.GetJob(job).Describe() != tc.expectedJobs[job] {
-			t.Logf("Wrong job loaded %v expected %v", j.js.GetJob(job).Name(), tc.expectedJobs[job])
-			t.Fail()
+			t.Errorf("Wrong job loaded %v expected %v", j.js.GetJob(job).Name(), tc.expectedJobs[job])
 		}
 		i++
 	}
 	if len(msg.Replies()) != 1 {
-		t.Logf("Wrong number of replies received %v should be 1", len(msg.Replies()))
-		t.Fail()
+		t.Errorf("Wrong number of replies received %v should be 1", len(msg.Replies()))
 	}
 	if msg.Replies()[0] != tc.expectedReplyOnReload {
-		t.Logf("Wrong reply '%v' should be '%v'", msg.Replies()[0], tc.expectedReplyOnReload)
-		t.Fail()
+		t.Errorf("Wrong reply '%v' should be '%v'", msg.Replies()[0], tc.expectedReplyOnReload)
 	}
 }
 
@@ -183,12 +172,10 @@ func TestDescribe(t *testing.T) {
 	j.Describe(msg)
 
 	if len(msg.Replies()) != 1 {
-		t.Logf("Wrong number of replies %v but expected 1", len(msg.Replies()))
-		t.Fail()
+		t.Errorf("Wrong number of replies %v but expected 1", len(msg.Replies()))
 	}
 	if msg.Replies()[0] != tc.expectedJobs["test"] {
-		t.Logf("Wrong reply '%v' but expected '%v'", msg.Replies()[0], tc.expectedJobs["test"])
-		t.Fail()
+		t.Errorf("Wrong reply '%v' but expected '%v'", msg.Replies()[0], tc.expectedJobs["test"])
 	}
 }
 
@@ -211,13 +198,11 @@ func TestList(t *testing.T) {
 	j.List(msg)
 
 	if len(msg.Replies()) != 1 {
-		t.Logf("Wrong number of replies %v but expected 1", len(msg.Replies()))
-		t.Fail()
+		t.Errorf("Wrong number of replies %v but expected 1", len(msg.Replies()))
 	}
 	for jobName := range tc.expectedJobs {
 		if !strings.Contains(msg.Replies()[0], jobName) {
-			t.Logf("Job named '%v' not found in '%v'", jobName, msg.Replies()[0])
-			t.Fail()
+			t.Errorf("Job named '%v' not found in '%v'", jobName, msg.Replies()[0])
 		}
 	}
 }
@@ -246,13 +231,11 @@ func TestBuild(t *testing.T) {
 	j.Build(msg)
 
 	if len(msg.Replies()) != len(tc.expectedRepliesOnBuild) {
-		t.Logf("Wrong number of replies %v but expected %v", len(msg.Replies()), len(tc.expectedRepliesOnBuild))
-		t.Fail()
+		t.Errorf("Wrong number of replies %v but expected %v", len(msg.Replies()), len(tc.expectedRepliesOnBuild))
 	}
 	for i, reply := range msg.Replies() {
 		if reply != tc.expectedRepliesOnBuild[i] {
-			t.Logf("Wrong reply '%v' but expected '%v'", reply, tc.expectedRepliesOnBuild[i])
-			t.Fail()
+			t.Errorf("Wrong reply '%v' but expected '%v'", reply, tc.expectedRepliesOnBuild[i])
 		}
 	}
 }
