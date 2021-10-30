@@ -20,11 +20,8 @@ func TestProcess(t *testing.T) {
 	disableLogs()
 	client := NewMockClient()
 	processedMessages := 0
-	c := &Chat{
-		api:        client,
-		processors: map[string][]IMessageProcessor{},
-		botID:      "me",
-	}
+	c := NewChat(client, false, "me")
+
 	c.RegisterMessageProcessor(
 		NewMessageProcessor(
 			"github.com/ifosch/synthetic/pkg/slack.CountProcessedMessages",
@@ -75,9 +72,7 @@ func TestProcess(t *testing.T) {
 
 func TestRegisterMessageProcessor(t *testing.T) {
 	disableLogs()
-	c := &Chat{
-		processors: map[string][]IMessageProcessor{},
-	}
+	c := NewChat(NewMockClient(), false, "")
 
 	c.RegisterMessageProcessor(
 		NewMessageProcessor(
