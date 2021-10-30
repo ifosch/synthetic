@@ -93,17 +93,10 @@ func TestParsing(t *testing.T) {
 	}
 }
 
-type loadTC struct {
-	expectedReplyOnReload  string
-	expectedRepliesOnBuild []string
-}
-
 func TestLoadReload(t *testing.T) {
 	disableLogs()
-	tc := loadTC{
-		expectedReplyOnReload: "3 Jenkins jobs reloaded",
-	}
-	j := NewJenkins("", "", "", NewMockJobServer(expectedJobs))
+	mockJobServer := NewMockJobServer(expectedJobs)
+	j := NewJenkins("", "", "", mockJobServer)
 
 	if j.js.GetJobs().Len() != len(expectedJobs) {
 		t.Errorf("Wrong number of jobs loaded %v but expected %v", j.js.GetJobs().Len(), len(expectedJobs))
@@ -111,13 +104,13 @@ func TestLoadReload(t *testing.T) {
 	i := 0
 	for job := range expectedJobs {
 		if j.js.GetJob(job).Describe() != expectedJobs[job] {
-			t.Errorf("Wrong job loaded %v expected %v", j.js.GetJob(job), expectedJobs[job])
+			t.Errorf("Wrong job loaded %v expected %v", j.js.GetJob(job).Name(), expectedJobs[job])
 		}
 		i++
 	}
 
+	mockJobServer.originalJobs["run"] = "Run an arbitrary command"
 	msg := synthetic.NewMockMessage("", false)
-
 	j.Reload(msg)
 
 	if j.js.GetJobs().Len() != len(expectedJobs) {
@@ -133,8 +126,9 @@ func TestLoadReload(t *testing.T) {
 	if len(msg.Replies()) != 1 {
 		t.Errorf("Wrong number of replies received %v should be 1", len(msg.Replies()))
 	}
-	if msg.Replies()[0] != tc.expectedReplyOnReload {
-		t.Errorf("Wrong reply '%v' should be '%v'", msg.Replies()[0], tc.expectedReplyOnReload)
+	expectedReply := "4 Jenkins jobs reloaded"
+	if msg.Replies()[0] != expectedReply {
+		t.Errorf("Wrong reply '%v' should be '%v'", msg.Replies()[0], expectedReply)
 	}
 }
 
@@ -172,24 +166,22 @@ func TestList(t *testing.T) {
 
 func TestBuild(t *testing.T) {
 	disableLogs()
-	tc := loadTC{
-		expectedRepliesOnBuild: []string{
-			"Execution for job `test` was queued",
-			fmt.Sprintf("Building `test` with parameters `map[]` (%v/job/test)", os.Getenv("JENKINS_URL")),
-			"Job test completed",
-		},
+	expectedRepliesOnBuild := []string{
+		"Execution for job `test` was queued",
+		fmt.Sprintf("Building `test` with parameters `map[]` (%v/job/test)", os.Getenv("JENKINS_URL")),
+		"Job test completed",
 	}
 	j := NewJenkins("", "", "", NewMockJobServer(expectedJobs))
 	msg := synthetic.NewMockMessage("build test", true)
 
 	j.Build(msg)
 
-	if len(msg.Replies()) != len(tc.expectedRepliesOnBuild) {
-		t.Errorf("Wrong number of replies %v but expected %v", len(msg.Replies()), len(tc.expectedRepliesOnBuild))
+	if len(msg.Replies()) != len(expectedRepliesOnBuild) {
+		t.Errorf("Wrong number of replies %v but expected %v", len(msg.Replies()), len(expectedRepliesOnBuild))
 	}
 	for i, reply := range msg.Replies() {
-		if reply != tc.expectedRepliesOnBuild[i] {
-			t.Errorf("Wrong reply '%v' but expected '%v'", reply, tc.expectedRepliesOnBuild[i])
+		if reply != expectedRepliesOnBuild[i] {
+			t.Errorf("Wrong reply '%v' but expected '%v'", reply, expectedRepliesOnBuild[i])
 		}
 	}
 }
