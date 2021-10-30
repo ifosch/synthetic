@@ -89,7 +89,7 @@ func TestRegisterMessageProcessor(t *testing.T) {
 }
 
 type EventMessageCase struct {
-	event    *s.MessageEvent
+	event    s.MessageEvent
 	expected Message
 }
 
@@ -139,7 +139,7 @@ func TestReadMessage(t *testing.T) {
 	messageEvents := messageEvents()
 	tc := map[string]*EventMessageCase{
 		// "Incomplete message": {
-		// 	event: messageEvents[0],
+		// 	event: *messageEvents["uninitialized message"],
 		// 	expected: Message{
 		// 		Completed:    false,
 		// 		thread:       false,
@@ -150,7 +150,7 @@ func TestReadMessage(t *testing.T) {
 		// 	},
 		// },
 		"Threaded message": {
-			event: messageEvents[1],
+			event: *messageEvents["empty message in thread"],
 			expected: Message{
 				Completed:    true,
 				thread:       true,
@@ -161,7 +161,7 @@ func TestReadMessage(t *testing.T) {
 			},
 		},
 		"Non-threaded message": {
-			event: messageEvents[2],
+			event: *messageEvents["empty message no thread"],
 			expected: Message{
 				Completed:    true,
 				thread:       false,
@@ -172,7 +172,7 @@ func TestReadMessage(t *testing.T) {
 			},
 		},
 		"Message with mention": {
-			event: messageEvents[3],
+			event: *messageEvents["only mention no thread"],
 			expected: Message{
 				Completed:    true,
 				thread:       false,
@@ -186,7 +186,7 @@ func TestReadMessage(t *testing.T) {
 
 	for testID, data := range tc {
 		t.Run(testID, func(t *testing.T) {
-			message, err := chat.ReadMessage(data.event)
+			message, err := chat.ReadMessage(&data.event)
 			if err != nil {
 				t.Logf("ReadMessage errored for %v: %v", testID, err)
 				t.Fail()
