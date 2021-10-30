@@ -92,6 +92,35 @@ func TestRegisterMessageProcessor(t *testing.T) {
 	}
 }
 
+type EventMessageCase struct {
+	event    s.MessageEvent
+	expected Message
+}
+
+func sameConversations(a, b *Conversation) bool {
+	if a != nil && b != nil && a.Name() == b.Name() {
+		return true
+	}
+	return false
+}
+
+func sameUsers(a, b *User) bool {
+	if a != nil && b != nil && a.Name() == b.Name() {
+		return true
+	}
+	return false
+}
+
+func sameMessages(a, b *Message) bool {
+	if a != nil && b != nil {
+		return true
+	}
+	if a.Completed != b.Completed || a.thread != b.thread || a.mention != b.mention || !sameUsers(a.user, b.user) || !sameConversations(a.conversation, b.conversation) || a.text != b.text {
+		return false
+	}
+	return true
+}
+
 func TestReadMessage(t *testing.T) {
 	client := NewMockClient()
 	chat := &Chat{
