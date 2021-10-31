@@ -29,6 +29,41 @@ var expectedJobs = map[string]string{
 	"deploy": "Deploy project",
 }
 
+func compareStringLists(a, b []string) error {
+	if len(a) != len(b) {
+		return fmt.Errorf("Wrong number of elements, got %v expected %v", len(a), len(b))
+	}
+	for i, itemA := range a {
+		found := false
+		for _, itemB := range b {
+			if itemA == itemB {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return fmt.Errorf("Unexpected element '%v', expected '%v'", itemA, b[i])
+		}
+	}
+	return nil
+}
+
+func values(m map[string]string) []string {
+	v := make([]string, 0, len(m))
+	for _, value := range m {
+		v = append(v, value)
+	}
+	return v
+}
+
+func keys(m map[string]string) []string {
+	k := make([]string, 0, len(m))
+	for key := range m {
+		k = append(k, key)
+	}
+	return k
+}
+
 func TestParsing(t *testing.T) {
 	disableLogs()
 	j := NewJenkins("", "", "", NewMockJobServer(expectedJobs))
@@ -98,52 +133,36 @@ func TestLoadReload(t *testing.T) {
 	mockJobServer := NewMockJobServer(expectedJobs)
 	j := NewJenkins("", "", "", mockJobServer)
 
-	if j.js.GetJobs().Len() != len(expectedJobs) {
-		t.Errorf("Wrong number of jobs loaded %v but expected %v", j.js.GetJobs().Len(), len(expectedJobs))
-	}
-	i := 0
-	for job := range expectedJobs {
-		if j.js.GetJob(job).Describe() != expectedJobs[job] {
-			t.Errorf("Wrong job loaded %v expected %v", j.js.GetJob(job).Name(), expectedJobs[job])
-		}
-		i++
+	if err := compareStringLists(keys(mockJobServer.originalJobs), keys(expectedJobs)); err != nil {
+		t.Error(err)
 	}
 
 	mockJobServer.originalJobs["run"] = "Run an arbitrary command"
 	msg := synthetic.NewMockMessage("", false)
+
 	j.Reload(msg)
 
-	if j.js.GetJobs().Len() != len(expectedJobs) {
-		t.Errorf("Wrong number of jobs loaded %v but expected %v", j.js.GetJobs().Len(), len(expectedJobs))
-	}
-	i = 0
-	for job := range expectedJobs {
-		if j.js.GetJob(job).Describe() != expectedJobs[job] {
-			t.Errorf("Wrong job loaded %v expected %v", j.js.GetJob(job).Name(), expectedJobs[job])
-		}
-		i++
-	}
-	if len(msg.Replies()) != 1 {
-		t.Errorf("Wrong number of replies received %v should be 1", len(msg.Replies()))
+	if err := compareStringLists(keys(mockJobServer.originalJobs), keys(expectedJobs)); err != nil {
+		t.Error(err)
 	}
 	expectedReply := "4 Jenkins jobs reloaded"
-	if msg.Replies()[0] != expectedReply {
-		t.Errorf("Wrong reply '%v' should be '%v'", msg.Replies()[0], expectedReply)
+	if err := compareStringLists(msg.Replies(), []string{expectedReply}); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestDescribe(t *testing.T) {
 	disableLogs()
 	j := NewJenkins("", "", "", NewMockJobServer(expectedJobs))
-	msg := synthetic.NewMockMessage("describe test", true)
 
-	j.Describe(msg)
+	for jobName, description := range expectedJobs {
+		msg := synthetic.NewMockMessage(fmt.Sprintf("describe %s", jobName), true)
 
-	if len(msg.Replies()) != 1 {
-		t.Errorf("Wrong number of replies %v but expected 1", len(msg.Replies()))
-	}
-	if msg.Replies()[0] != expectedJobs["test"] {
-		t.Errorf("Wrong reply '%v' but expected '%v'", msg.Replies()[0], expectedJobs["test"])
+		j.Describe(msg)
+
+		if msg.Replies()[0] != description {
+			t.Errorf("Wrong description received '%s', expected '%s'", msg.Replies()[0], description)
+		}
 	}
 }
 
@@ -157,10 +176,9 @@ func TestList(t *testing.T) {
 	if len(msg.Replies()) != 1 {
 		t.Errorf("Wrong number of replies %v but expected 1", len(msg.Replies()))
 	}
-	for jobName := range expectedJobs {
-		if !strings.Contains(msg.Replies()[0], jobName) {
-			t.Errorf("Job named '%v' not found in '%v'", jobName, msg.Replies()[0])
-		}
+	jobNames := strings.Split(msg.Replies()[0], "\n")
+	if err := compareStringLists(jobNames[:len(jobNames)-1], keys(expectedJobs)); err != nil {
+		t.Error(err)
 	}
 }
 
@@ -176,13 +194,8 @@ func TestBuild(t *testing.T) {
 
 	j.Build(msg)
 
-	if len(msg.Replies()) != len(expectedRepliesOnBuild) {
-		t.Errorf("Wrong number of replies %v but expected %v", len(msg.Replies()), len(expectedRepliesOnBuild))
-	}
-	for i, reply := range msg.Replies() {
-		if reply != expectedRepliesOnBuild[i] {
-			t.Errorf("Wrong reply '%v' but expected '%v'", reply, expectedRepliesOnBuild[i])
-		}
+	if err := compareStringLists(msg.Replies(), expectedRepliesOnBuild); err != nil {
+		t.Error(err)
 	}
 }
 
@@ -209,14 +222,9 @@ func TestTokenizeParams(t *testing.T) {
 	for testID, tc := range tt {
 		t.Run(testID, func(t *testing.T) {
 			result := tokenizeParams(testID)
-			if len(result) != len(tc.result) {
-				t.Errorf("expected %d results but got %d", len(tc.result), len(result))
-			}
 
-			for i, value := range result {
-				if value != tc.result[i] {
-					t.Errorf("expected element %d to be %s but was %s", i, tc.result[i], value)
-				}
+			if err := compareStringLists(result, tc.result); err != nil {
+				t.Error(err)
 			}
 		})
 	}
