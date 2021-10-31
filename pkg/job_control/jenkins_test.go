@@ -120,7 +120,12 @@ func TestParsing(t *testing.T) {
 					t.Errorf("Missing argument '%v'", expectedName)
 				}
 				if value != expectedValue {
-					t.Errorf("Wrong value '%v' for '%v' should be '%v'", value, expectedName, expectedValue)
+					t.Errorf(
+						"Wrong value '%v' for '%v' should be '%v'",
+						value,
+						expectedName,
+						expectedValue,
+					)
 				}
 			}
 		})
@@ -130,7 +135,10 @@ func TestParsing(t *testing.T) {
 func TestLoadReload(t *testing.T) {
 	j, _ := setup()
 
-	if err := compareStringLists(keys(j.js.(*MockJobServer).originalJobs), keys(expectedJobs)); err != nil {
+	if err := compareStringLists(
+		keys(j.js.(*MockJobServer).originalJobs),
+		keys(expectedJobs),
+	); err != nil {
 		t.Error(err)
 	}
 
@@ -139,7 +147,10 @@ func TestLoadReload(t *testing.T) {
 
 	j.Reload(msg)
 
-	if err := compareStringLists(keys(j.js.(*MockJobServer).originalJobs), keys(expectedJobs)); err != nil {
+	if err := compareStringLists(
+		keys(j.js.(*MockJobServer).originalJobs),
+		keys(expectedJobs),
+	); err != nil {
 		t.Error(err)
 	}
 	expectedReply := "4 Jenkins jobs reloaded"
@@ -158,7 +169,11 @@ func TestDescribe(t *testing.T) {
 			j.Describe(msg)
 
 			if msg.Replies()[0] != description {
-				t.Errorf("Wrong description received '%s', expected '%s'", msg.Replies()[0], description)
+				t.Errorf(
+					"Wrong description received '%s', expected '%s'",
+					msg.Replies()[0],
+					description,
+				)
 			}
 		})
 	}
@@ -170,7 +185,10 @@ func TestList(t *testing.T) {
 	j.List(msg)
 
 	if len(msg.(*synthetic.MockMessage).Replies()) != 1 {
-		t.Errorf("Wrong number of replies %v but expected 1", len(msg.(*synthetic.MockMessage).Replies()))
+		t.Errorf(
+			"Wrong number of replies %v but expected 1",
+			len(msg.(*synthetic.MockMessage).Replies()),
+		)
 	}
 	jobNames := strings.Split(msg.(*synthetic.MockMessage).Replies()[0], "\n")
 	if err := compareStringLists(jobNames[:len(jobNames)-1], keys(expectedJobs)); err != nil {
@@ -183,13 +201,19 @@ func TestBuild(t *testing.T) {
 	msg.(*synthetic.MockMessage).OriginalText = "build test"
 	expectedRepliesOnBuild := []string{
 		"Execution for job `test` was queued",
-		fmt.Sprintf("Building `test` with parameters `map[]` (%v/job/test)", os.Getenv("JENKINS_URL")),
+		fmt.Sprintf(
+			"Building `test` with parameters `map[]` (%v/job/test)",
+			os.Getenv("JENKINS_URL"),
+		),
 		"Job test completed",
 	}
 
 	j.Build(msg)
 
-	if err := compareStringLists(msg.(*synthetic.MockMessage).Replies(), expectedRepliesOnBuild); err != nil {
+	if err := compareStringLists(
+		msg.(*synthetic.MockMessage).Replies(),
+		expectedRepliesOnBuild,
+	); err != nil {
 		t.Error(err)
 	}
 }
