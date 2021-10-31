@@ -16,19 +16,6 @@ func disableLogs() {
 	log.SetOutput(ioutil.Discard)
 }
 
-type parsingTC struct {
-	command       string
-	expectedJob   string
-	expectedArgs  map[string]string
-	expectedError string
-}
-
-var expectedJobs = map[string]string{
-	"build":  "Build the project",
-	"test":   "Run test suit on the project",
-	"deploy": "Deploy project",
-}
-
 func compareStringLists(a, b []string) error {
 	if len(a) != len(b) {
 		return fmt.Errorf("Wrong number of elements, got %v expected %v", len(a), len(b))
@@ -62,6 +49,19 @@ func setup() (*Jenkins, synthetic.Message) {
 	msg := synthetic.NewMockMessage("", false)
 
 	return j, msg
+}
+
+var expectedJobs = map[string]string{
+	"build":  "Build the project",
+	"test":   "Run test suit on the project",
+	"deploy": "Deploy project",
+}
+
+type parsingTC struct {
+	command       string
+	expectedJob   string
+	expectedArgs  map[string]string
+	expectedError string
 }
 
 func TestParsing(t *testing.T) {
