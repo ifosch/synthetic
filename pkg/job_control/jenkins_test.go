@@ -48,14 +48,6 @@ func compareStringLists(a, b []string) error {
 	return nil
 }
 
-func values(m map[string]string) []string {
-	v := make([]string, 0, len(m))
-	for _, value := range m {
-		v = append(v, value)
-	}
-	return v
-}
-
 func keys(m map[string]string) []string {
 	k := make([]string, 0, len(m))
 	for key := range m {
@@ -64,9 +56,16 @@ func keys(m map[string]string) []string {
 	return k
 }
 
-func TestParsing(t *testing.T) {
+func setup() (*Jenkins, synthetic.Message) {
 	disableLogs()
 	j := NewJenkins("", "", "", NewMockJobServer(expectedJobs))
+	msg := synthetic.NewMockMessage("", false)
+
+	return j, msg
+}
+
+func TestParsing(t *testing.T) {
+	j, _ := setup()
 
 	tcs := map[string]parsingTC{
 		"build  deploy      INDEX=users": {
@@ -129,20 +128,18 @@ func TestParsing(t *testing.T) {
 }
 
 func TestLoadReload(t *testing.T) {
-	disableLogs()
-	mockJobServer := NewMockJobServer(expectedJobs)
-	j := NewJenkins("", "", "", mockJobServer)
+	j, _ := setup()
 
-	if err := compareStringLists(keys(mockJobServer.originalJobs), keys(expectedJobs)); err != nil {
+	if err := compareStringLists(keys(j.js.(*MockJobServer).originalJobs), keys(expectedJobs)); err != nil {
 		t.Error(err)
 	}
 
-	mockJobServer.originalJobs["run"] = "Run an arbitrary command"
+	j.js.(*MockJobServer).originalJobs["run"] = "Run an arbitrary command"
 	msg := synthetic.NewMockMessage("", false)
 
 	j.Reload(msg)
 
-	if err := compareStringLists(keys(mockJobServer.originalJobs), keys(expectedJobs)); err != nil {
+	if err := compareStringLists(keys(j.js.(*MockJobServer).originalJobs), keys(expectedJobs)); err != nil {
 		t.Error(err)
 	}
 	expectedReply := "4 Jenkins jobs reloaded"
@@ -152,8 +149,7 @@ func TestLoadReload(t *testing.T) {
 }
 
 func TestDescribe(t *testing.T) {
-	disableLogs()
-	j := NewJenkins("", "", "", NewMockJobServer(expectedJobs))
+	j, _ := setup()
 
 	for jobName, description := range expectedJobs {
 		t.Run(jobName, func(t *testing.T) {
@@ -169,34 +165,31 @@ func TestDescribe(t *testing.T) {
 }
 
 func TestList(t *testing.T) {
-	disableLogs()
-	j := NewJenkins("", "", "", NewMockJobServer(expectedJobs))
-	msg := synthetic.NewMockMessage("", false)
+	j, msg := setup()
 
 	j.List(msg)
 
-	if len(msg.Replies()) != 1 {
-		t.Errorf("Wrong number of replies %v but expected 1", len(msg.Replies()))
+	if len(msg.(*synthetic.MockMessage).Replies()) != 1 {
+		t.Errorf("Wrong number of replies %v but expected 1", len(msg.(*synthetic.MockMessage).Replies()))
 	}
-	jobNames := strings.Split(msg.Replies()[0], "\n")
+	jobNames := strings.Split(msg.(*synthetic.MockMessage).Replies()[0], "\n")
 	if err := compareStringLists(jobNames[:len(jobNames)-1], keys(expectedJobs)); err != nil {
 		t.Error(err)
 	}
 }
 
 func TestBuild(t *testing.T) {
-	disableLogs()
+	j, msg := setup()
+	msg.(*synthetic.MockMessage).OriginalText = "build test"
 	expectedRepliesOnBuild := []string{
 		"Execution for job `test` was queued",
 		fmt.Sprintf("Building `test` with parameters `map[]` (%v/job/test)", os.Getenv("JENKINS_URL")),
 		"Job test completed",
 	}
-	j := NewJenkins("", "", "", NewMockJobServer(expectedJobs))
-	msg := synthetic.NewMockMessage("build test", true)
 
 	j.Build(msg)
 
-	if err := compareStringLists(msg.Replies(), expectedRepliesOnBuild); err != nil {
+	if err := compareStringLists(msg.(*synthetic.MockMessage).Replies(), expectedRepliesOnBuild); err != nil {
 		t.Error(err)
 	}
 }
