@@ -20,7 +20,7 @@ func compareStringLists(a, b []string) error {
 	if len(a) != len(b) {
 		return fmt.Errorf("Wrong number of elements, got %v expected %v", len(a), len(b))
 	}
-	for i, itemA := range a {
+	for _, itemA := range a {
 		found := false
 		for _, itemB := range b {
 			if itemA == itemB {
@@ -29,7 +29,7 @@ func compareStringLists(a, b []string) error {
 			}
 		}
 		if !found {
-			return fmt.Errorf("Unexpected element '%v', expected '%v'", itemA, b[i])
+			return fmt.Errorf("Unexpected element '%v', expected list was %v", itemA, b)
 		}
 	}
 	return nil
