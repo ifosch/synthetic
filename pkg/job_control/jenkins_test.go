@@ -156,13 +156,15 @@ func TestDescribe(t *testing.T) {
 	j := NewJenkins("", "", "", NewMockJobServer(expectedJobs))
 
 	for jobName, description := range expectedJobs {
-		msg := synthetic.NewMockMessage(fmt.Sprintf("describe %s", jobName), true)
+		t.Run(jobName, func(t *testing.T) {
+			msg := synthetic.NewMockMessage(fmt.Sprintf("describe %s", jobName), true)
 
-		j.Describe(msg)
+			j.Describe(msg)
 
-		if msg.Replies()[0] != description {
-			t.Errorf("Wrong description received '%s', expected '%s'", msg.Replies()[0], description)
-		}
+			if msg.Replies()[0] != description {
+				t.Errorf("Wrong description received '%s', expected '%s'", msg.Replies()[0], description)
+			}
+		})
 	}
 }
 
