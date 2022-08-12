@@ -10,51 +10,25 @@ import (
 	"github.com/ifosch/synthetic/pkg/synthetic"
 )
 
-// LogMessage is a message processor to log the message received.
-func LogMessage(msg synthetic.Message) {
-	thread := ""
-	if msg.Thread() {
-		thread = "a thread in "
-	}
-	log.Printf(
-		"Message: '%v' from '%v' in %v'%v'\n",
-		msg.Text(),
-		msg.User().Name(),
-		thread,
-		msg.Conversation().Name(),
-	)
-}
-
 // Chat represents the whole chat connection providing methods to
 // interact with the chat system.
 type Chat struct {
 	api                  IClient
 	rtm                  IRTM
 	defaultReplyInThread bool
-	processors           map[string][]IMessageProcessor
 	botID                string
 	MessageChannel       chan (synthetic.Message)
 }
 
 // NewChat is the constructor for the Chat object.
 func NewChat(api IClient, defaultReplyInThread bool, botID string) *Chat {
-	processors := map[string][]IMessageProcessor{
-		"message": {},
-	}
 	return &Chat{
 		api:                  api,
 		rtm:                  api.NewRTM(),
 		defaultReplyInThread: defaultReplyInThread,
-		processors:           processors,
 		botID:                botID,
 		MessageChannel:       make(chan synthetic.Message),
 	}
-}
-
-// RegisterMessageProcessor allows to add more message processors.
-func (c *Chat) RegisterMessageProcessor(processor IMessageProcessor) {
-	c.processors["message"] = append(c.processors["message"], processor)
-	log.Printf("%v function registered", processor.Name())
 }
 
 // Start initializes the chat connection.

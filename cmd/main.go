@@ -11,16 +11,7 @@ import (
 	jobcontrol "github.com/ifosch/synthetic/pkg/job_control"
 	"github.com/ifosch/synthetic/pkg/k8s"
 	myslack "github.com/ifosch/synthetic/pkg/slack"
-	"github.com/ifosch/synthetic/pkg/synthetic"
 )
-
-func replyHello(msg synthetic.Message) {
-	msg.Reply("hello", msg.Thread())
-}
-
-func reactHello(msg synthetic.Message) {
-	msg.React("wave")
-}
 
 func main() {
 	slackToken, ok := os.LookupEnv("SLACK_TOKEN")
@@ -51,16 +42,16 @@ func main() {
 	}
 
 	go chat.Start()
-	cHandler := command.NewCommandHandler()
-	newRegisterChatCommands(cHandler)
-	newRegisterJenkinsCommands(cHandler, jenkins)
-	newRegisterK8sCommands(cHandler)
+	cHandler := command.NewHandler()
+	registerChatCommands(cHandler)
+	registerJenkinsCommands(cHandler, jenkins)
+	registerK8sCommands(cHandler)
 
 	// Blocks until chat.MessageChannel is closed
 	cHandler.EventLoop(chat.MessageChannel)
 }
 
-func newRegisterChatCommands(handler *command.Handler) {
+func registerChatCommands(handler *command.Handler) {
 	var err error
 	// LogMessage is a message processor to log the message received.
 	err = handler.Register(
@@ -109,29 +100,7 @@ func newRegisterChatCommands(handler *command.Handler) {
 	}
 }
 
-func registerChatCommands(chat *myslack.Chat) {
-	chat.RegisterMessageProcessor(
-		myslack.NewMessageProcessor(
-			"github.com/ifosch/pkg/slack.LogMessage",
-			myslack.LogMessage,
-		),
-	)
-
-	chat.RegisterMessageProcessor(
-		myslack.NewMessageProcessor(
-			"github.com/ifosch/synthetic/main.replyHello",
-			myslack.Mentioned(myslack.Contains(replyHello, "hello")),
-		),
-	)
-	chat.RegisterMessageProcessor(
-		myslack.NewMessageProcessor(
-			"github.com/ifosch/synthetic/main.reactHello",
-			myslack.NotMentioned(myslack.Contains(reactHello, "hello")),
-		),
-	)
-}
-
-func newRegisterJenkinsCommands(handler *command.Handler, jenkins *jobcontrol.Jenkins) {
+func registerJenkinsCommands(handler *command.Handler, jenkins *jobcontrol.Jenkins) {
 	var err error
 	err = handler.Register(
 		"jenkins.List",
@@ -183,34 +152,7 @@ func newRegisterJenkinsCommands(handler *command.Handler, jenkins *jobcontrol.Je
 	}
 }
 
-func registerJenkinsCommands(chat *myslack.Chat, jenkins *jobcontrol.Jenkins) {
-	chat.RegisterMessageProcessor(
-		myslack.NewMessageProcessor(
-			"github.com/ifosch/synthetic/pkg/jenkins.List",
-			myslack.Exactly(myslack.Mentioned(jenkins.List), "list"),
-		),
-	)
-	chat.RegisterMessageProcessor(
-		myslack.NewMessageProcessor(
-			"github.com/ifosch/synthetic/pkg/jenkins.Describe",
-			myslack.Mentioned(myslack.Contains(jenkins.Describe, "describe")),
-		),
-	)
-	chat.RegisterMessageProcessor(
-		myslack.NewMessageProcessor(
-			"github.com/ifosch/synthetic/pkg/jenkins.Build",
-			myslack.Mentioned(myslack.Contains(jenkins.Build, "build")),
-		),
-	)
-	chat.RegisterMessageProcessor(
-		myslack.NewMessageProcessor(
-			"github.com/ifosch/synthetic/pkg/jenkins.Reload",
-			myslack.Mentioned(myslack.Contains(jenkins.Reload, "reload")),
-		),
-	)
-}
-
-func newRegisterK8sCommands(handler *command.Handler) {
+func registerK8sCommands(handler *command.Handler) {
 	var err error
 	err = handler.Register(
 		"k8s.listClusters",
@@ -236,19 +178,4 @@ func newRegisterK8sCommands(handler *command.Handler) {
 	if err != nil {
 		panic(err)
 	}
-}
-
-func registerK8sCommands(chat *myslack.Chat) {
-	chat.RegisterMessageProcessor(
-		myslack.NewMessageProcessor(
-			"github.com/ifosch/synthetic/pkg/k8s.listClusters",
-			myslack.Exactly(myslack.Mentioned(k8s.ListClusters), "list clusters"),
-		),
-	)
-	chat.RegisterMessageProcessor(
-		myslack.NewMessageProcessor(
-			"github.com/ifosch/synthetic/pkg/k8s.listPods",
-			myslack.Contains(myslack.Mentioned(k8s.ListPods), "list pods"),
-		),
-	)
 }
