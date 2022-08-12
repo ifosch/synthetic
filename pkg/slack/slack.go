@@ -33,6 +33,7 @@ type Chat struct {
 	defaultReplyInThread bool
 	processors           map[string][]IMessageProcessor
 	botID                string
+	MessageChannel       chan (synthetic.Message)
 }
 
 // NewChat is the constructor for the Chat object.
@@ -46,6 +47,7 @@ func NewChat(api IClient, defaultReplyInThread bool, botID string) *Chat {
 		defaultReplyInThread: defaultReplyInThread,
 		processors:           processors,
 		botID:                botID,
+		MessageChannel:       make(chan synthetic.Message),
 	}
 }
 
@@ -66,10 +68,8 @@ func (c *Chat) Start() {
 
 // Dispatch routes the message to the appropriate command
 func (c *Chat) Dispatch(msg *Message) {
-	for _, processor := range c.processors["message"] {
-		log.Printf("Invoking processor %v", processor.Name())
-		go processor.Run(msg)
-	}
+	var message synthetic.Message = msg
+	c.MessageChannel <- message
 }
 
 // Process runs the message processing for the chat system.
