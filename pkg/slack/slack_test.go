@@ -4,12 +4,11 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"sync"
 	"testing"
 	"time"
 
 	s "github.com/slack-go/slack"
-
-	"github.com/ifosch/synthetic/pkg/synthetic"
 )
 
 func disableLogs() {
@@ -21,14 +20,30 @@ func TestProcess(t *testing.T) {
 	disableLogs()
 	client := NewMockClient()
 	processedMessages := 0
+	// This is required to avoid race conditions in computing this
+	// side effect. Proper solution would be not to rely on side
+	// effects for testing.
+	//
+	// Alternatively we could create a type to hold the counter
+	// that controls the locking itself, but that's only useful
+	// once we change this test.
+	var m sync.Mutex
+
 	c := NewChat(client, false, "me")
 
-	c.RegisterMessageProcessor(
-		NewMessageProcessor(
-			"github.com/ifosch/synthetic/pkg/slack.CountProcessedMessages",
-			func(synthetic.Message) { processedMessages++ },
-		),
-	)
+	go func(m *sync.Mutex) {
+		for {
+			_, ok := <-c.MessageChannel
+			if !ok {
+				t.Error("Borked!")
+				continue
+			}
+			m.Lock()
+			processedMessages++
+			m.Unlock()
+		}
+	}(&m)
+
 	messageEvent := s.MessageEvent{
 		Msg: s.Msg{
 			ClientMsgID:     "CMID001",
@@ -61,10 +76,12 @@ func TestProcess(t *testing.T) {
 		Data: &connectedEvent,
 	})
 
+	m.Lock()
 	if processedMessages != 1 {
 		t.Logf("Wrong number of processed messages %v should be %v", processedMessages, 1)
 		t.Fail()
 	}
+	m.Unlock()
 	if c.botID != "U000002" {
 		t.Logf("Wrong botID %v should be U000002", c.botID)
 		t.Fail()

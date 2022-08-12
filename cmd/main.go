@@ -50,11 +50,14 @@ func main() {
 		log.Fatalf("error connecting to jenkins: %s", err.Error())
 	}
 
-	registerChatCommands(chat)
-	registerJenkinsCommands(chat, jenkins)
-	registerK8sCommands(chat)
+	go chat.Start()
+	cHandler := command.NewCommandHandler()
+	newRegisterChatCommands(cHandler)
+	newRegisterJenkinsCommands(cHandler, jenkins)
+	newRegisterK8sCommands(cHandler)
 
-	chat.Start()
+	// Blocks until chat.MessageChannel is closed
+	cHandler.EventLoop(chat.MessageChannel)
 }
 
 func newRegisterChatCommands(handler *command.Handler) {
