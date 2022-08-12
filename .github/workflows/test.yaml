@@ -5,26 +5,26 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       -
-        name: Checkout
-        uses: actions/checkout@v2
-      -
         name: Install Go
         uses: actions/setup-go@v2
         with:
           go-version: '^1.16'
       -
         name: Prepare coverage
+        run: |
+          go install github.com/jandelgado/gcov2lcov@latest
+      -
+        name: Checkout
+        uses: actions/checkout@v2
+      -
+        name: Run tests
         env:
           CC_TEST_REPORTER_ID: ${{ secrets.CODECLIMATE_TOKEN }}
         run: |
           curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter && \
           chmod +x ./cc-test-reporter && \
           ./cc-test-reporter before-build && \
-          go get -u github.com/jandelgado/gcov2lcov
-      -
-        name: Run tests
-        run: |
-          go test -v ./... -coverprofile=coverage.out -covermode=atomic && \
+          go test -v ./... -race -coverprofile=coverage.out -covermode=atomic && \
           mkdir -p coverage && \
           gcov2lcov -infile=coverage.out -outfile=coverage/lcov.info
       -
@@ -62,9 +62,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       -
-        name: Checkout
-        uses: actions/checkout@v2
-      -
         name: Install Go
         uses: actions/setup-go@v2
         with:
@@ -72,7 +69,10 @@ jobs:
       -
         name: Install gocyclo
         run: |
-          go get -u github.com/fzipp/gocyclo/cmd/gocyclo@latest
+          go install github.com/fzipp/gocyclo/cmd/gocyclo@latest
+      -
+        name: Checkout
+        uses: actions/checkout@v2
       -
         name: Check cyclomatic complexity
         run: |
@@ -81,9 +81,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       -
-        name: Checkout
-        uses: actions/checkout@v2
-      -
         name: Install Go
         uses: actions/setup-go@v2
         with:
@@ -91,7 +88,10 @@ jobs:
       -
         name: Install golint
         run: |
-          go get -u golang.org/x/lint/golint
+          go install golang.org/x/lint/golint@latest
+      -
+        name: Checkout
+        uses: actions/checkout@v2
       -
         name: Check Style
         run: |
@@ -100,9 +100,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       -
-        name: Checkout
-        uses: actions/checkout@v2
-      -
         name: Install Go
         uses: actions/setup-go@v2
         with:
@@ -110,7 +107,10 @@ jobs:
       -
         name: Install ineffassign
         run: |
-          go get -u github.com/gordonklaus/ineffassign
+          go install github.com/gordonklaus/ineffassign@latest
+      -
+        name: Checkout
+        uses: actions/checkout@v2
       -
         name: Download dependencies to local
         run : |
@@ -123,9 +123,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       -
-        name: Checkout
-        uses: actions/checkout@v2
-      -
         name: Install Go
         uses: actions/setup-go@v2
         with:
@@ -133,7 +130,10 @@ jobs:
       -
         name: Install spellchecker
         run: |
-          go get -u github.com/client9/misspell/cmd/misspell
+          go install github.com/client9/misspell/cmd/misspell@latest
+      -
+        name: Checkout
+        uses: actions/checkout@v2
       -
         name: Check spelling
         run: |
@@ -142,9 +142,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       -
-        name: Checkout
-        uses: actions/checkout@v2
-      -
         name: Install Go
         uses: actions/setup-go@v2
         with:
@@ -152,7 +149,10 @@ jobs:
       -
         name: Install staticcheck
         run: |
-          go get -u honnef.co/go/tools/cmd/staticcheck@latest
+          go install honnef.co/go/tools/cmd/staticcheck@latest
+      -
+        name: Checkout
+        uses: actions/checkout@v2
       -
         name: Download dependencies to local
         run : |
