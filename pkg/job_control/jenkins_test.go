@@ -2,7 +2,7 @@ package jobcontrol
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"os"
 	"strings"
@@ -13,7 +13,7 @@ import (
 
 func disableLogs() {
 	log.SetFlags(0)
-	log.SetOutput(ioutil.Discard)
+	log.SetOutput(io.Discard)
 }
 
 type parsingTC struct {

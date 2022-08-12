@@ -2,7 +2,7 @@ package slack
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"testing"
 	"time"
@@ -14,7 +14,7 @@ import (
 
 func disableLogs() {
 	log.SetFlags(0)
-	log.SetOutput(ioutil.Discard)
+	log.SetOutput(io.Discard)
 }
 
 func TestProcess(t *testing.T) {
