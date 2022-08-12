@@ -54,7 +54,6 @@ func TestReply(t *testing.T) {
 		api:                  client,
 		rtm:                  rtm,
 		defaultReplyInThread: false,
-		processors:           map[string][]IMessageProcessor{},
 		botID:                "me",
 	}
 	messageEvents := messageEvents()

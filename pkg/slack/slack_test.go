@@ -6,7 +6,6 @@ import (
 	"log"
 	"sync"
 	"testing"
-	"time"
 
 	s "github.com/slack-go/slack"
 )
@@ -71,7 +70,6 @@ func TestProcess(t *testing.T) {
 	c.Process(s.RTMEvent{
 		Data: &messageEvent,
 	})
-	time.Sleep(100 * time.Millisecond)
 	c.Process(s.RTMEvent{
 		Data: &connectedEvent,
 	})
@@ -84,23 +82,6 @@ func TestProcess(t *testing.T) {
 	m.Unlock()
 	if c.botID != "U000002" {
 		t.Logf("Wrong botID %v should be U000002", c.botID)
-		t.Fail()
-	}
-}
-
-func TestRegisterMessageProcessor(t *testing.T) {
-	disableLogs()
-	c := NewChat(NewMockClient(), false, "")
-
-	c.RegisterMessageProcessor(
-		NewMessageProcessor(
-			"github.com/ifosch/synthetic/pkg/slack.LogMessage",
-			LogMessage,
-		),
-	)
-
-	if c.processors["message"][0].Name() != "github.com/ifosch/synthetic/pkg/slack.LogMessage" {
-		t.Logf("Wrong processor registered '%v' expected 'github.com/ifosch/synthetic/pkg/slack.LogMessage'", c.processors["message"][0].Name())
 		t.Fail()
 	}
 }
@@ -148,7 +129,6 @@ func TestReadMessage(t *testing.T) {
 		api:                  client,
 		rtm:                  nil,
 		defaultReplyInThread: false,
-		processors:           map[string][]IMessageProcessor{},
 		botID:                "me",
 	}
 	user, _ := NewUserFromID("U000001", client)
