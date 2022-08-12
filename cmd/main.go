@@ -3,9 +3,11 @@ package main
 import (
 	"log"
 	"os"
+	"strings"
 
 	"github.com/slack-go/slack"
 
+	"github.com/ifosch/synthetic/pkg/command"
 	jobcontrol "github.com/ifosch/synthetic/pkg/job_control"
 	"github.com/ifosch/synthetic/pkg/k8s"
 	myslack "github.com/ifosch/synthetic/pkg/slack"
@@ -55,6 +57,55 @@ func main() {
 	chat.Start()
 }
 
+func newRegisterChatCommands(handler *command.Handler) {
+	var err error
+	// LogMessage is a message processor to log the message received.
+	err = handler.Register(
+		"main.LogMessage",
+		func(c *command.Command) {
+			msg := c.Message()
+			thread := ""
+			if msg.Thread() {
+				thread = "a thread in "
+			}
+			log.Printf(
+				"Message: '%v' from '%v' in %v'%v'\n",
+				msg.Text(),
+				msg.User().Name(),
+				thread,
+				msg.Conversation().Name(),
+			)
+		},
+	)
+	if err != nil {
+		panic(err)
+	}
+	err = handler.Register(
+		"main.replyHello",
+		func(c *command.Command) {
+			msg := c.Message()
+			if msg.Mention() && strings.Contains(msg.Text(), "hello") {
+				msg.Reply("hello", msg.Thread())
+			}
+		},
+	)
+	if err != nil {
+		panic(err)
+	}
+	err = handler.Register(
+		"main.reactHello",
+		func(c *command.Command) {
+			msg := c.Message()
+			if !msg.Mention() && strings.Contains(msg.Text(), "hello") {
+				msg.React("wave")
+			}
+		},
+	)
+	if err != nil {
+		panic(err)
+	}
+}
+
 func registerChatCommands(chat *myslack.Chat) {
 	chat.RegisterMessageProcessor(
 		myslack.NewMessageProcessor(
@@ -75,6 +126,58 @@ func registerChatCommands(chat *myslack.Chat) {
 			myslack.NotMentioned(myslack.Contains(reactHello, "hello")),
 		),
 	)
+}
+
+func newRegisterJenkinsCommands(handler *command.Handler, jenkins *jobcontrol.Jenkins) {
+	var err error
+	err = handler.Register(
+		"jenkins.List",
+		func(c *command.Command) {
+			msg := c.Message()
+			if msg.Text() == "list" && msg.Mention() {
+				jenkins.List(msg)
+			}
+		},
+	)
+	if err != nil {
+		panic(err)
+	}
+	err = handler.Register(
+		"jenkins.Describe",
+		func(c *command.Command) {
+			msg := c.Message()
+			if msg.Mention() && strings.Contains(msg.Text(), "describe") {
+				jenkins.Describe(msg)
+			}
+		},
+	)
+	if err != nil {
+		panic(err)
+	}
+	err = handler.Register(
+		"jenkins.Build",
+		func(c *command.Command) {
+			msg := c.Message()
+			if msg.Mention() && strings.Contains(msg.Text(), "build") {
+				jenkins.Build(msg)
+			}
+		},
+	)
+	if err != nil {
+		panic(err)
+	}
+	err = handler.Register(
+		"jenkins.Reload",
+		func(c *command.Command) {
+			msg := c.Message()
+			if msg.Mention() && strings.Contains(msg.Text(), "reload") {
+				jenkins.Reload(msg)
+			}
+		},
+	)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func registerJenkinsCommands(chat *myslack.Chat, jenkins *jobcontrol.Jenkins) {
@@ -102,6 +205,34 @@ func registerJenkinsCommands(chat *myslack.Chat, jenkins *jobcontrol.Jenkins) {
 			myslack.Mentioned(myslack.Contains(jenkins.Reload, "reload")),
 		),
 	)
+}
+
+func newRegisterK8sCommands(handler *command.Handler) {
+	var err error
+	err = handler.Register(
+		"k8s.listClusters",
+		func(c *command.Command) {
+			msg := c.Message()
+			if msg.Text() == "list clusters" && msg.Mention() {
+				k8s.ListClusters(msg)
+			}
+		},
+	)
+	if err != nil {
+		panic(err)
+	}
+	err = handler.Register(
+		"k8s.listPods",
+		func(c *command.Command) {
+			msg := c.Message()
+			if msg.Mention() && strings.Contains(msg.Text(), "list pods") {
+				k8s.ListPods(msg)
+			}
+		},
+	)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func registerK8sCommands(chat *myslack.Chat) {
