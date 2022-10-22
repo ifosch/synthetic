@@ -22,11 +22,11 @@ jobs:
         run: |
           curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter && \
           chmod +x ./cc-test-reporter && \
-          ./cc-test-reporter before-build && \
-          go get -u github.com/jandelgado/gcov2lcov
+          ./cc-test-reporter before-build
       -
         name: Run tests
         run: |
+          go get -u github.com/jandelgado/gcov2lcov && \
           go test -v ./... -coverprofile=coverage.out -covermode=atomic && \
           mkdir -p coverage && \
           gcov2lcov -infile=coverage.out -outfile=coverage/lcov.info
