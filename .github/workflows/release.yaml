@@ -8,9 +8,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       -
-        name: Checkout
-        uses: actions/checkout@v2
-      -
         name: Install Go
         uses: actions/setup-go@v2
         with:
@@ -22,19 +19,27 @@ jobs:
           echo ::set-output name=SOURCE_TAG::${GITHUB_REF#refs/tags/}
       -
         name: Prepare coverage
+        run: |
+          go install github.com/jandelgado/gcov2lcov@latest
+      -
+        name: Checkout
+        uses: actions/checkout@v2
+      -
+        name: Prepare coverage report
         env:
           CC_TEST_REPORTER_ID: ${{ secrets.CODECLIMATE_TOKEN }}
+          CC_TR_URL: "https://codeclimate.com/downloads/test-reporter"
+          CC_TR_BIN: "test-reporter-latest-linux-amd64"
         run: |
-          curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter && \
+          mkdir -p coverage && \
+          curl -L ${CC_TR_URL}/${CC_TR_BIN} > ./cc-test-reporter && \
           chmod +x ./cc-test-reporter && \
           ./cc-test-reporter before-build
       -
         name: Run tests
         run: |
-          go install github.com/jandelgado/gcov2lcov && \
-          go test -v ./... -coverprofile=coverage.out -covermode=atomic && \
-          mkdir -p coverage && \
-          gcov2lcov -infile=coverage.out -outfile=coverage/lcov.info
+          go test -v ./... -race -coverprofile=coverage/gcov.out -covermode=atomic && \
+          gcov2lcov -infile=coverage/gcov.out -outfile=coverage/lcov.info
       -
         name: Push coverage
         env:
