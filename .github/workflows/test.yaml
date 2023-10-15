@@ -1,7 +1,7 @@
 on: [pull_request]
 
 env:
-  GO_VERSION: '^1.21.2'
+  GO_VERSION: '^1.21'
 
 jobs:
   test:
@@ -13,162 +13,14 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
       -
-        name: Prepare coverage
-        run: |
-          go install github.com/jandelgado/gcov2lcov@latest
-      -
         name: Checkout
         uses: actions/checkout@v2
-      -
-        name: Prepare coverage report
-        env:
-          CC_TEST_REPORTER_ID: ${{ secrets.CODECLIMATE_TOKEN }}
-          CC_TR_URL: "https://codeclimate.com/downloads/test-reporter"
-          CC_TR_BIN: "test-reporter-latest-linux-amd64"
-        run: |
-          mkdir -p coverage && \
-          curl -L ${CC_TR_URL}/${CC_TR_BIN} > ./cc-test-reporter && \
-          chmod +x ./cc-test-reporter && \
-          ./cc-test-reporter before-build
       -
         name: Run tests
-        run: |
-          go test -v ./... -race -coverprofile=coverage/gcov.out -covermode=atomic && \
-          gcov2lcov -infile=coverage/gcov.out -outfile=coverage/lcov.info
-      -
-        name: Push coverage
         env:
           CC_TEST_REPORTER_ID: ${{ secrets.CODECLIMATE_TOKEN }}
         run: |
-          ./cc-test-reporter after-build -t lcov
-  check-formatting:
-    runs-on: ubuntu-latest
-    steps:
-      -
-        name: Checkout
-        uses: actions/checkout@v2
-      -
-        name: Check formatting
-        run: |
-          gofmt -s -e -d -l . | tee /tmp/gofmt.output && [ $(cat /tmp/gofmt.output | wc -l) -eq 0 ]
-  check-smells:
-    runs-on: ubuntu-latest
-    steps:
-      -
-        name: Checkout
-        uses: actions/checkout@v2
-      -
-        name: Install Go
-        uses: actions/setup-go@v2
-        with:
-          go-version: ${{ env.GO_VERSION }}
-      -
-        name: Check code smells
-        run: |
-          go vet ./...
-  check-complexity:
-    runs-on: ubuntu-latest
-    steps:
-      -
-        name: Install Go
-        uses: actions/setup-go@v2
-        with:
-          go-version: ${{ env.GO_VERSION }}
-      -
-        name: Install gocyclo
-        run: |
-          go install github.com/fzipp/gocyclo/cmd/gocyclo@latest
-      -
-        name: Checkout
-        uses: actions/checkout@v2
-      -
-        name: Check cyclomatic complexity
-        run: |
-          gocyclo -over 15 .
-  check-style:
-    runs-on: ubuntu-latest
-    steps:
-      -
-        name: Install Go
-        uses: actions/setup-go@v2
-        with:
-          go-version: ${{ env.GO_VERSION }}
-      -
-        name: Install golint
-        run: |
-          go install golang.org/x/lint/golint@latest
-      -
-        name: Checkout
-        uses: actions/checkout@v2
-      -
-        name: Check Style
-        run: |
-          golint ./...
-  check-ineffectual-assignments:
-    runs-on: ubuntu-latest
-    steps:
-      -
-        name: Install Go
-        uses: actions/setup-go@v2
-        with:
-          go-version: ${{ env.GO_VERSION }}
-      -
-        name: Install ineffassign
-        run: |
-          go install github.com/gordonklaus/ineffassign@latest
-      -
-        name: Checkout
-        uses: actions/checkout@v2
-      -
-        name: Download dependencies to local
-        run : |
-          go mod download
-      -
-        name: Check ineffectual assignments
-        run: |
-          ineffassign ./...
-  check-spelling:
-    runs-on: ubuntu-latest
-    steps:
-      -
-        name: Install Go
-        uses: actions/setup-go@v2
-        with:
-          go-version: ${{ env.GO_VERSION }}
-      -
-        name: Install spellchecker
-        run: |
-          go install github.com/client9/misspell/cmd/misspell@latest
-      -
-        name: Checkout
-        uses: actions/checkout@v2
-      -
-        name: Check spelling
-        run: |
-          misspell -error .
-  staticcheck:
-    runs-on: ubuntu-latest
-    steps:
-      -
-        name: Install Go
-        uses: actions/setup-go@v2
-        with:
-          go-version: ${{ env.GO_VERSION }}
-      -
-        name: Install staticcheck
-        run: |
-          go install honnef.co/go/tools/cmd/staticcheck@latest
-      -
-        name: Checkout
-        uses: actions/checkout@v2
-      -
-        name: Download dependencies to local
-        run : |
-          go mod download
-      -
-        name: Run staticcheck
-        run: |
-          staticcheck ./...
+          scripts/check.sh all
   check-license:
     runs-on: ubuntu-latest
     steps:
