@@ -16,8 +16,48 @@ func disableLogs() {
 	log.SetOutput(io.Discard)
 }
 
+func compareStringLists(a, b []string) error {
+	if len(a) != len(b) {
+		return fmt.Errorf("Wrong number of elements, got %v expected %v", len(a), len(b))
+	}
+	for _, itemA := range a {
+		found := false
+		for _, itemB := range b {
+			if itemA == itemB {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return fmt.Errorf("Unexpected element '%v', expected list was %v", itemA, b)
+		}
+	}
+	return nil
+}
+
+func keys(m map[string]string) []string {
+	k := make([]string, 0, len(m))
+	for key := range m {
+		k = append(k, key)
+	}
+	return k
+}
+
+func setup() (*Jenkins, synthetic.Message) {
+	disableLogs()
+	j := NewJenkins("", "", "", NewMockJobServer(expectedJobs))
+	msg := synthetic.NewMockMessage("", false)
+
+	return j, msg
+}
+
+var expectedJobs = map[string]string{
+	"build":  "Build the project",
+	"test":   "Run test suit on the project",
+	"deploy": "Deploy project",
+}
+
 type parsingTC struct {
-	input         string
 	command       string
 	expectedJob   string
 	expectedArgs  map[string]string
@@ -25,39 +65,28 @@ type parsingTC struct {
 }
 
 func TestParsing(t *testing.T) {
-	disableLogs()
-	j := &Jenkins{
-		js: NewMockJobServer(
-			map[string]string{
-				"deploy": "Deploy project",
-			},
-		),
-	}
+	j, _ := setup()
 
-	tcs := []parsingTC{
-		{
-			input:         "build  deploy      INDEX=users",
+	tcs := map[string]parsingTC{
+		"build  deploy      INDEX=users": {
 			command:       "build",
 			expectedJob:   "deploy",
 			expectedArgs:  map[string]string{"INDEX": "users"},
 			expectedError: "",
 		},
-		{
-			input:         "build  deploy INDEX=\"users ducks\"",
+		"build  deploy INDEX=\"users ducks\"": {
 			command:       "build",
 			expectedJob:   "deploy",
 			expectedArgs:  map[string]string{"INDEX": "\"users ducks\""},
 			expectedError: "",
 		},
-		{
-			input:         "describe",
+		"describe": {
 			command:       "describe",
 			expectedJob:   "",
 			expectedArgs:  map[string]string{},
 			expectedError: "you must specify, at least, one job. You can use `list` to get a list of defined jobs and `describe <job>` to get all details about a job",
 		},
-		{
-			input:         "describe missingjob",
+		"describe missingjob": {
 			command:       "describe",
 			expectedJob:   "", // Job does not exist so it returns empty
 			expectedArgs:  map[string]string{},
@@ -65,9 +94,9 @@ func TestParsing(t *testing.T) {
 		},
 	}
 
-	for _, test := range tcs {
-		t.Run(test.input, func(t *testing.T) {
-			job, args, err := j.ParseArgs(test.input, test.command)
+	for testID, test := range tcs {
+		t.Run(testID, func(t *testing.T) {
+			job, args, err := j.ParseArgs(testID, test.command)
 
 			// Unexpected error happened
 			if test.expectedError == "" && err != nil {
@@ -91,192 +120,130 @@ func TestParsing(t *testing.T) {
 					t.Errorf("Missing argument '%v'", expectedName)
 				}
 				if value != expectedValue {
-					t.Errorf("Wrong value '%v' for '%v' should be '%v'", value, expectedName, expectedValue)
+					t.Errorf(
+						"Wrong value '%v' for '%v' should be '%v'",
+						value,
+						expectedName,
+						expectedValue,
+					)
 				}
 			}
 		})
 	}
 }
 
-type loadTC struct {
-	expectedJobs           map[string]string
-	expectedReplyOnReload  string
-	expectedRepliesOnBuild []string
-}
-
 func TestLoadReload(t *testing.T) {
-	disableLogs()
-	tc := loadTC{
-		expectedJobs: map[string]string{
-			"build":  "Build the project",
-			"test":   "Run test suit on the project",
-			"deploy": "Deploy project",
-		},
-		expectedReplyOnReload: "3 Jenkins jobs reloaded",
-	}
-	j := &Jenkins{
-		js: NewMockJobServer(
-			tc.expectedJobs,
-		),
+	j, _ := setup()
+
+	if err := compareStringLists(
+		keys(j.js.(*MockJobServer).originalJobs),
+		keys(expectedJobs),
+	); err != nil {
+		t.Error(err)
 	}
 
-	if j.js.GetJobs().Len() != len(tc.expectedJobs) {
-		t.Errorf("Wrong number of jobs loaded %v but expected %v", j.js.GetJobs().Len(), len(tc.expectedJobs))
-	}
-	i := 0
-	for job := range tc.expectedJobs {
-		if j.js.GetJob(job).Describe() != tc.expectedJobs[job] {
-			t.Errorf("Wrong job loaded %v expected %v", j.js.GetJob(job), tc.expectedJobs[job])
-		}
-		i++
-	}
-
+	j.js.(*MockJobServer).originalJobs["run"] = "Run an arbitrary command"
 	msg := synthetic.NewMockMessage("", false)
 
 	j.Reload(msg)
 
-	if j.js.GetJobs().Len() != len(tc.expectedJobs) {
-		t.Errorf("Wrong number of jobs loaded %v but expected %v", j.js.GetJobs().Len(), len(tc.expectedJobs))
+	if err := compareStringLists(
+		keys(j.js.(*MockJobServer).originalJobs),
+		keys(expectedJobs),
+	); err != nil {
+		t.Error(err)
 	}
-	i = 0
-	for job := range tc.expectedJobs {
-		if j.js.GetJob(job).Describe() != tc.expectedJobs[job] {
-			t.Errorf("Wrong job loaded %v expected %v", j.js.GetJob(job).Name(), tc.expectedJobs[job])
-		}
-		i++
-	}
-	if len(msg.Replies()) != 1 {
-		t.Errorf("Wrong number of replies received %v should be 1", len(msg.Replies()))
-	}
-	if msg.Replies()[0] != tc.expectedReplyOnReload {
-		t.Errorf("Wrong reply '%v' should be '%v'", msg.Replies()[0], tc.expectedReplyOnReload)
+	expectedReply := "4 Jenkins jobs reloaded"
+	if err := compareStringLists(msg.Replies(), []string{expectedReply}); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestDescribe(t *testing.T) {
-	disableLogs()
-	tc := loadTC{
-		expectedJobs: map[string]string{
-			"build":  "Build the project",
-			"test":   "Run test suit on the project",
-			"deploy": "Deploy project",
-		},
-	}
-	j := &Jenkins{
-		js: NewMockJobServer(
-			tc.expectedJobs,
-		),
-	}
-	msg := synthetic.NewMockMessage("describe test", true)
+	j, _ := setup()
 
-	j.Describe(msg)
+	for jobName, description := range expectedJobs {
+		t.Run(jobName, func(t *testing.T) {
+			msg := synthetic.NewMockMessage(fmt.Sprintf("describe %s", jobName), true)
 
-	if len(msg.Replies()) != 1 {
-		t.Errorf("Wrong number of replies %v but expected 1", len(msg.Replies()))
-	}
-	if msg.Replies()[0] != tc.expectedJobs["test"] {
-		t.Errorf("Wrong reply '%v' but expected '%v'", msg.Replies()[0], tc.expectedJobs["test"])
+			j.Describe(msg)
+
+			if msg.Replies()[0] != description {
+				t.Errorf(
+					"Wrong description received '%s', expected '%s'",
+					msg.Replies()[0],
+					description,
+				)
+			}
+		})
 	}
 }
 
 func TestList(t *testing.T) {
-	disableLogs()
-	tc := loadTC{
-		expectedJobs: map[string]string{
-			"build":  "Build the project",
-			"test":   "Run test suit on the project",
-			"deploy": "Deploy project",
-		},
-	}
-	j := &Jenkins{
-		js: NewMockJobServer(
-			tc.expectedJobs,
-		),
-	}
-	msg := synthetic.NewMockMessage("", false)
+	j, msg := setup()
 
 	j.List(msg)
 
-	if len(msg.Replies()) != 1 {
-		t.Errorf("Wrong number of replies %v but expected 1", len(msg.Replies()))
+	if len(msg.(*synthetic.MockMessage).Replies()) != 1 {
+		t.Errorf(
+			"Wrong number of replies %v but expected 1",
+			len(msg.(*synthetic.MockMessage).Replies()),
+		)
 	}
-	for jobName := range tc.expectedJobs {
-		if !strings.Contains(msg.Replies()[0], jobName) {
-			t.Errorf("Job named '%v' not found in '%v'", jobName, msg.Replies()[0])
-		}
+	jobNames := strings.Split(msg.(*synthetic.MockMessage).Replies()[0], "\n")
+	if err := compareStringLists(jobNames[:len(jobNames)-1], keys(expectedJobs)); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestBuild(t *testing.T) {
-	disableLogs()
-	tc := loadTC{
-		expectedJobs: map[string]string{
-			"build":  "Build the project",
-			"test":   "Run test suit on the project",
-			"deploy": "Deploy project",
-		},
-		expectedRepliesOnBuild: []string{
-			"Execution for job `test` was queued",
-			fmt.Sprintf("Building `test` with parameters `map[]` (%v/job/test)", os.Getenv("JENKINS_URL")),
-			"Job test completed",
-		},
-	}
-	j := &Jenkins{
-		js: NewMockJobServer(
-			tc.expectedJobs,
+	j, msg := setup()
+	msg.(*synthetic.MockMessage).OriginalText = "build test"
+	expectedRepliesOnBuild := []string{
+		"Execution for job `test` was queued",
+		fmt.Sprintf(
+			"Building `test` with parameters `map[]` (%v/job/test)",
+			os.Getenv("JENKINS_URL"),
 		),
+		"Job test completed",
 	}
-	msg := synthetic.NewMockMessage("build test", true)
 
 	j.Build(msg)
 
-	if len(msg.Replies()) != len(tc.expectedRepliesOnBuild) {
-		t.Errorf("Wrong number of replies %v but expected %v", len(msg.Replies()), len(tc.expectedRepliesOnBuild))
-	}
-	for i, reply := range msg.Replies() {
-		if reply != tc.expectedRepliesOnBuild[i] {
-			t.Errorf("Wrong reply '%v' but expected '%v'", reply, tc.expectedRepliesOnBuild[i])
-		}
+	if err := compareStringLists(
+		msg.(*synthetic.MockMessage).Replies(),
+		expectedRepliesOnBuild,
+	); err != nil {
+		t.Error(err)
 	}
 }
 
 func TestTokenizeParams(t *testing.T) {
-	tt := []struct {
-		input  string
+	tt := map[string]struct {
 		result []string
 	}{
-		{
-			input:  "",
+		"": {
 			result: []string{},
 		},
-		{
-			input:  "build deploy",
+		"build deploy": {
 			result: []string{"build", "deploy"},
 		},
-		{
-			input:  "build  deploy      INDEX=users",
+		"build  deploy      INDEX=users": {
 			result: []string{"build", "deploy", "INDEX=users"},
 		},
-		{
-			input:  "build  deploy      INDEX=\"users\"",
+		"build  deploy      INDEX=\"users\"": {
 			result: []string{"build", "deploy", "INDEX=\"users\""},
 		},
-		{
-			input:  "build  deploy      INDEX=\"users ducks\"",
+		"build  deploy      INDEX=\"users ducks\"": {
 			result: []string{"build", "deploy", "INDEX=\"users ducks\""},
 		},
 	}
-	for _, tc := range tt {
-		t.Run(tc.input, func(t *testing.T) {
-			result := tokenizeParams(tc.input)
-			if len(result) != len(tc.result) {
-				t.Errorf("expected %d results but got %d", len(tc.result), len(result))
-			}
+	for testID, tc := range tt {
+		t.Run(testID, func(t *testing.T) {
+			result := tokenizeParams(testID)
 
-			for i, value := range result {
-				if value != tc.result[i] {
-					t.Errorf("expected element %d to be %s but was %s", i, tc.result[i], value)
-				}
+			if err := compareStringLists(result, tc.result); err != nil {
+				t.Error(err)
 			}
 		})
 	}

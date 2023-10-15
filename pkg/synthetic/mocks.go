@@ -24,7 +24,7 @@ func (msc MockConversation) Name() string {
 type MockMessage struct {
 	thread       bool
 	mention      bool
-	text         string
+	OriginalText string
 	user         MockUser
 	conversation MockConversation
 	replies      []string
@@ -33,9 +33,9 @@ type MockMessage struct {
 // NewMockMessage is the MockMessage constructor.
 func NewMockMessage(input string, mention bool) *MockMessage {
 	return &MockMessage{
-		text:    input,
-		mention: mention,
-		replies: []string{},
+		OriginalText: input,
+		mention:      mention,
+		replies:      []string{},
 	}
 }
 
@@ -59,7 +59,7 @@ func (msm *MockMessage) Unreact(reaction string) {
 
 // ClearMention is a mock for Message.ClearMention() method.
 func (msm *MockMessage) ClearMention() string {
-	return msm.text
+	return msm.OriginalText
 }
 
 // Thread is a mock for Message.Thread() method.
@@ -74,7 +74,7 @@ func (msm *MockMessage) Mention() bool {
 
 // Text is a mock for Message.Text() method.
 func (msm *MockMessage) Text() string {
-	return msm.text
+	return msm.OriginalText
 }
 
 // User is a mock for Message.User() method.

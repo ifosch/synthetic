@@ -36,6 +36,7 @@ func main() {
 		os.Getenv("JENKINS_URL"),
 		os.Getenv("JENKINS_USER"),
 		os.Getenv("JENKINS_PASSWORD"),
+		&jobcontrol.JenkinsJobServer{},
 	)
 	if err := jenkins.Connect(); err != nil {
 		log.Fatalf("error connecting to jenkins: %s", err.Error())
